@@ -20,14 +20,7 @@ import plotly.graph_objects as go
 import statsmodels.api as sm
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-
-try:
-    from xgboost import XGBRegressor
-    XGB_AVAILABLE = True
-except Exception:
-    XGB_AVAILABLE = False
 
 # --------------------------------------------------------------------------------------
 # PAGE CONFIG
@@ -52,7 +45,7 @@ BG_CARD = "#111827"
 BG_CARD_LIGHT = "#1F2937"
 TEXT_MUTED = "#9CA3AF"
 PALETTE = [PRIMARY, ACCENT, SUCCESS, WARNING, DANGER, "#A855F7", "#EC4899", "#14B8A6"]
-MODEL_COLORS = {"OLS Linear Regression": PRIMARY, "Random Forest": SUCCESS, "XGBoost": WARNING}
+MODEL_COLORS = {"OLS Linear Regression": PRIMARY}
 
 st.markdown(
     f"""
@@ -237,9 +230,6 @@ target_col = st.sidebar.selectbox(
 
 drop_na_target = st.sidebar.checkbox(f"Drop rows with missing '{target_col}'", value=True)
 test_size = st.sidebar.slider("Test set size", 0.1, 0.4, 0.2, 0.05)
-run_xgb = st.sidebar.checkbox("Include XGBoost", value=XGB_AVAILABLE, disabled=not XGB_AVAILABLE)
-if not XGB_AVAILABLE:
-    st.sidebar.caption("⚠️ xgboost not installed — install with `pip install xgboost` to enable it.")
 
 st.sidebar.markdown("---")
 st.sidebar.caption("Built with Streamlit · statsmodels · scikit-learn · XGBoost")
@@ -436,7 +426,7 @@ def perf_metrics(y_true, y_pred):
 
 
 @st.cache_resource(show_spinner=True)
-def train_models(x_train, x_test, y_train, y_test, use_xgb):
+def train_models(x_train, x_test, y_train, y_test):
     results = {}
 
     # ---- OLS Linear Regression ----
@@ -449,104 +439,45 @@ def train_models(x_train, x_test, y_train, y_test, use_xgb):
         "test_perf": perf_metrics(y_test, ols.predict(x_test)),
     }
 
-    # ---- Random Forest ----
-    rf = RandomForestRegressor(random_state=1, n_estimators=200)
-    rf.fit(x_train, y_train)
-    results["Random Forest"] = {
-        "model": rf,
-        "train_pred": rf.predict(x_train),
-        "test_pred": rf.predict(x_test),
-        "train_perf": perf_metrics(y_train, rf.predict(x_train)),
-        "test_perf": perf_metrics(y_test, rf.predict(x_test)),
-        "importance": pd.Series(rf.feature_importances_, index=x_train.columns).sort_values(ascending=False),
-    }
-
-    # ---- XGBoost ----
-    if use_xgb and XGB_AVAILABLE:
-        xgb = XGBRegressor(random_state=1, n_estimators=300, max_depth=4, learning_rate=0.08)
-        xgb.fit(x_train, y_train)
-        results["XGBoost"] = {
-            "model": xgb,
-            "train_pred": xgb.predict(x_train),
-            "test_pred": xgb.predict(x_test),
-            "train_perf": perf_metrics(y_train, xgb.predict(x_train)),
-            "test_perf": perf_metrics(y_test, xgb.predict(x_test)),
-            "importance": pd.Series(xgb.feature_importances_, index=x_train.columns).sort_values(ascending=False),
-        }
-
     return results
 
 
 X_sm, x_train, x_test, y_train, y_test = prepare_model_data(df, target_col, test_size)
 
-with st.spinner("Training models..."):
-    model_results = train_models(x_train, x_test, y_train, y_test, run_xgb)
+with st.spinner("Training model..."):
+    model_results = train_models(x_train, x_test, y_train, y_test)
 
 # ========================================================================================
-# TAB 3: MODEL SUMMARY
+# TAB 3: MODEL SUMMARY (OLS Linear Regression)
 # ========================================================================================
 with tab_model:
-    section_banner("Model Performance Comparison (Test Set)")
+    section_banner("Linear Regression Performance (Test Set)")
 
-    perf_table = pd.DataFrame(
-        {name: res["test_perf"] for name, res in model_results.items()}
-    ).T
-    perf_table = perf_table[["R2", "RMSE", "MAE", "MAPE"]]
-    perf_table.columns = ["R² Score", "RMSE", "MAE", "MAPE (%)"]
-
-    best_model = perf_table["R² Score"].idxmax()
+    res = model_results["OLS Linear Regression"]
+    test_perf = res["test_perf"]
+    train_perf = res["train_perf"]
 
     mc1, mc2, mc3, mc4 = st.columns(4)
     with mc1:
-        kpi_card("Best Model", best_model, f"R² = {perf_table.loc[best_model, 'R² Score']:.3f}", SUCCESS)
+        kpi_card("R² Score", f"{test_perf['R2']:.3f}",
+                  f"Train R² {train_perf['R2']:.3f}", SUCCESS)
     with mc2:
-        kpi_card("Lowest RMSE", perf_table["RMSE"].idxmin(), f"{perf_table['RMSE'].min():,.2f}", ACCENT)
+        kpi_card("RMSE", f"{test_perf['RMSE']:,.2f}",
+                  f"Train {train_perf['RMSE']:,.2f}", ACCENT)
     with mc3:
-        kpi_card("Lowest MAE", perf_table["MAE"].idxmin(), f"{perf_table['MAE'].min():,.2f}", PRIMARY)
+        kpi_card("MAE", f"{test_perf['MAE']:,.2f}",
+                  f"Train {train_perf['MAE']:,.2f}", PRIMARY)
     with mc4:
-        kpi_card("Lowest MAPE", perf_table["MAPE (%)"].idxmin(), f"{perf_table['MAPE (%)'].min():,.1f}%", WARNING)
-
-    st.write("")
-    col1, col2 = st.columns([2, 3])
-    with col1:
-        st.markdown("##### 📋 Performance Table")
-        st.dataframe(
-            perf_table.style.format({"R² Score": "{:.3f}", "RMSE": "{:.2f}", "MAE": "{:.2f}", "MAPE (%)": "{:.1f}"})
-            .background_gradient(subset=["R² Score"], cmap="Greens")
-            .background_gradient(subset=["RMSE", "MAE", "MAPE (%)"], cmap="Reds_r"),
-            use_container_width=True,
-        )
-    with col2:
-        fig = go.Figure()
-        for metric in ["RMSE", "MAE"]:
-            fig.add_trace(go.Bar(
-                x=list(model_results.keys()),
-                y=perf_table[metric if metric != "RMSE" else "RMSE"],
-                name=metric,
-            ))
-        fig.update_layout(barmode="group", title="RMSE / MAE by Model")
-        st.plotly_chart(style_fig(fig), use_container_width=True)
-
-    st.write("")
-    fig = px.bar(
-        perf_table.reset_index().rename(columns={"index": "Model"}),
-        x="Model", y="R² Score", color="Model",
-        color_discrete_map=MODEL_COLORS,
-        title="R² Score by Model (higher is better)",
-        text_auto=".3f",
-    )
-    fig.update_layout(showlegend=False)
-    st.plotly_chart(style_fig(fig), use_container_width=True)
+        kpi_card("MAPE", f"{test_perf['MAPE']:,.1f}%",
+                  f"Train {train_perf['MAPE']:,.1f}%", WARNING)
 
     st.write("")
     section_banner("Predicted vs Actual")
-    model_choice = st.selectbox("Select model", list(model_results.keys()))
-    res = model_results[model_choice]
     plot_df = pd.DataFrame({"Actual": y_test, "Predicted": res["test_pred"]})
     fig = px.scatter(
         plot_df, x="Actual", y="Predicted", opacity=0.7,
-        color_discrete_sequence=[MODEL_COLORS.get(model_choice, PRIMARY)],
-        title=f"{model_choice}: Predicted vs Actual ({target_col})",
+        color_discrete_sequence=[PRIMARY],
+        title=f"Linear Regression: Predicted vs Actual ({target_col})",
     )
     min_v, max_v = plot_df["Actual"].min(), plot_df["Actual"].max()
     fig.add_trace(go.Scatter(x=[min_v, max_v], y=[min_v, max_v], mode="lines",
@@ -570,47 +501,48 @@ with tab_model:
         fig = px.histogram(resid, nbins=30, color_discrete_sequence=[ACCENT], title="Residual Distribution")
         st.plotly_chart(style_fig(fig), use_container_width=True)
 
-    if "importance" in res:
-        st.write("")
-        section_banner(f"Feature Importance — {model_choice}")
-        imp = res["importance"].head(12).sort_values()
-        fig = px.bar(
-            imp, orientation="h",
-            color=imp.values, color_continuous_scale=[BG_CARD_LIGHT, MODEL_COLORS.get(model_choice, PRIMARY)],
-            title="Top Feature Importances",
+    st.write("")
+    section_banner("Coefficient Summary")
+    coef_df = pd.DataFrame({
+        "Feature": res["model"].params.index,
+        "Coefficient": res["model"].params.values,
+        "P-value": res["model"].pvalues.values,
+    }).sort_values("Coefficient", key=abs, ascending=False)
+    st.dataframe(
+        coef_df.style.format({"Coefficient": "{:.4f}", "P-value": "{:.4f}"})
+        .background_gradient(subset=["Coefficient"], cmap="RdBu")
+        .applymap(lambda v: f"color: {SUCCESS}" if v < 0.05 else f"color: {DANGER}", subset=["P-value"]),
+        use_container_width=True,
+    )
+    st.caption("Coefficients with p-value < 0.05 (green) are statistically significant at the 95% confidence level.")
+
+    st.write("")
+    section_banner("OLS Regression Summary")
+    with st.expander("📄 Full statsmodels OLS summary", expanded=False):
+        st.text(res["model"].summary())
+
+    section_banner("Multicollinearity Check (VIF)")
+    try:
+        vif_df = pd.DataFrame()
+        vif_df["Feature"] = x_train.columns
+        vif_df["VIF"] = [variance_inflation_factor(x_train.values, i) for i in range(len(x_train.columns))]
+        vif_df = vif_df.sort_values("VIF", ascending=False)
+        st.dataframe(
+            vif_df.style.format({"VIF": "{:.2f}"}).background_gradient(subset=["VIF"], cmap="OrRd"),
+            use_container_width=True,
         )
-        fig.update_coloraxes(showscale=False)
-        st.plotly_chart(style_fig(fig), use_container_width=True)
-
-    if model_choice == "OLS Linear Regression":
-        st.write("")
-        section_banner("OLS Regression Summary")
-        with st.expander("📄 Full statsmodels OLS summary", expanded=False):
-            st.text(res["model"].summary())
-
-        section_banner("Multicollinearity Check (VIF)")
-        try:
-            vif_df = pd.DataFrame()
-            vif_df["Feature"] = x_train.columns
-            vif_df["VIF"] = [variance_inflation_factor(x_train.values, i) for i in range(len(x_train.columns))]
-            vif_df = vif_df.sort_values("VIF", ascending=False)
-            st.dataframe(
-                vif_df.style.format({"VIF": "{:.2f}"}).background_gradient(subset=["VIF"], cmap="OrRd"),
-                use_container_width=True,
-            )
-            st.caption("Rule of thumb: VIF > 5 indicates moderate multicollinearity, VIF > 10 indicates high multicollinearity.")
-        except Exception as e:
-            st.warning(f"Could not compute VIF: {e}")
+        st.caption("Rule of thumb: VIF > 5 indicates moderate multicollinearity, VIF > 10 indicates high multicollinearity.")
+    except Exception as e:
+        st.warning(f"Could not compute VIF: {e}")
 
 # ========================================================================================
 # TAB 4: PREDICT
 # ========================================================================================
 with tab_predict:
     section_banner(f"Predict {target_col.title()} for a New Firm")
-    st.caption("Enter firm characteristics below and generate a prediction from the selected model.")
+    st.caption("Enter firm characteristics below and generate a prediction using the Linear Regression model.")
 
-    pred_model_name = st.selectbox("Model to use", list(model_results.keys()), key="predict_model")
-
+    res = model_results["OLS Linear Regression"]
     feature_cols = [c for c in x_train.columns if c != "const"]
     input_vals = {}
     n_per_row = 3
@@ -627,15 +559,14 @@ with tab_predict:
         input_df.insert(0, "const", 1.0)
         input_df = input_df[x_train.columns]
 
-        model_obj = model_results[pred_model_name]["model"]
-        prediction = model_obj.predict(input_df)[0] if pred_model_name == "OLS Linear Regression" else model_obj.predict(input_df.drop(columns=["const"]))[0]
+        prediction = res["model"].predict(input_df)[0]
 
         st.markdown(
             f"""
             <div class="kpi-card" style="border: 1px solid {SUCCESS}; margin-top:10px;">
                 <div class="kpi-label">Predicted {target_col.title()}</div>
                 <div class="kpi-value" style="color:{SUCCESS}; font-size:2.2rem;">{prediction:,.2f}</div>
-                <div class="kpi-sub" style="color:{TEXT_MUTED};">using {pred_model_name}</div>
+                <div class="kpi-sub" style="color:{TEXT_MUTED};">using Linear Regression</div>
             </div>
             """,
             unsafe_allow_html=True,
