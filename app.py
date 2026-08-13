@@ -29,21 +29,18 @@ st.markdown("""
         color: #172033;
     }
 
-    .block-container {
-        padding: 1.2rem 2.2rem 2rem 2.2rem;
-        max-width: 1500px;
-    }
-
+   .block-container {
+    padding: 0.4rem 2.2rem 2rem 2.2rem;
+}
     /* Top navigation */
-    .topbar {
-        background: #FFFFFF;
-        border: 1px solid #E3E8EF;
-        border-radius: 14px;
-        padding: 12px 18px;
-        margin-bottom: 18px;
-        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
-    }
-
+  .topbar {
+    background: #FFFFFF;
+    border: 1px solid #E3E8EF;
+    border-radius: 14px;
+    padding: 10px 18px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+}
     .brand {
         font-size: 20px;
         font-weight: 750;
