@@ -1,15 +1,13 @@
 """
 Firm-Level Sales Regression Explorer
 =====================================
-An interactive Streamlit UI for the EDA + Linear Regression workflow
+A polished, interactive Streamlit UI for the EDA + Linear Regression workflow
 originally written as a Jupyter/Colab notebook.
 
 Run with:
     pip install streamlit pandas numpy scikit-learn statsmodels seaborn matplotlib scipy --break-system-packages
     streamlit run app.py
 """
-
-import io
 
 import numpy as np
 import pandas as pd
@@ -24,9 +22,119 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 import streamlit as st
 
-sns.set()
+sns.set_theme(style="whitegrid", palette="viridis")
+plt.rcParams["figure.facecolor"] = "none"
+plt.rcParams["axes.facecolor"] = "none"
+plt.rcParams["savefig.facecolor"] = "none"
 
-st.set_page_config(page_title="Firm-Level Sales Regression Explorer", layout="wide")
+st.set_page_config(
+    page_title="Firm-Level Sales Regression Explorer",
+    page_icon="📈",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+# --------------------------------------------------------------------------
+# Custom CSS — makes the default Streamlit look a bit more "designed"
+# --------------------------------------------------------------------------
+st.markdown(
+    """
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+
+        html, body, [class*="css"]  {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .hero {
+            background: linear-gradient(120deg, #6C63FF 0%, #A084EE 45%, #FF6FD8 100%);
+            padding: 2.1rem 2rem;
+            border-radius: 18px;
+            margin-bottom: 1.6rem;
+            box-shadow: 0 10px 30px rgba(108, 99, 255, 0.35);
+        }
+        .hero h1 {
+            color: white;
+            font-weight: 800;
+            font-size: 2.1rem;
+            margin: 0;
+        }
+        .hero p {
+            color: rgba(255,255,255,0.9);
+            margin-top: .4rem;
+            font-size: 1.02rem;
+        }
+
+        .glass-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 1.3rem 1.4rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.18);
+        }
+
+        div[data-testid="stMetric"] {
+            background: rgba(108, 99, 255, 0.10);
+            border: 1px solid rgba(108, 99, 255, 0.25);
+            border-radius: 14px;
+            padding: 0.8rem 0.6rem 0.4rem 0.9rem;
+        }
+
+        div[data-testid="stMetricLabel"] {
+            font-weight: 600;
+            opacity: 0.85;
+        }
+
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 6px;
+        }
+        .stTabs [data-baseweb="tab"] {
+            background-color: rgba(255,255,255,0.04);
+            border-radius: 10px 10px 0 0;
+            padding: 10px 18px;
+            font-weight: 600;
+        }
+        .stTabs [aria-selected="true"] {
+            background: linear-gradient(120deg, #6C63FF 0%, #A084EE 100%) !important;
+            color: white !important;
+        }
+
+        .stButton>button, .stDownloadButton>button {
+            background: linear-gradient(120deg, #6C63FF 0%, #A084EE 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 0.55rem 1.4rem;
+            font-weight: 700;
+            box-shadow: 0 4px 14px rgba(108, 99, 255, 0.4);
+        }
+        .stButton>button:hover, .stDownloadButton>button:hover {
+            filter: brightness(1.08);
+        }
+
+        .prediction-banner {
+            background: linear-gradient(120deg, #11998e 0%, #38ef7d 100%);
+            border-radius: 16px;
+            padding: 1.4rem 1.6rem;
+            color: #06281f;
+            font-weight: 700;
+            font-size: 1.4rem;
+            box-shadow: 0 10px 30px rgba(56, 239, 125, 0.30);
+            margin: 0.6rem 0 1.2rem 0;
+        }
+
+        section[data-testid="stSidebar"] {
+            border-right: 1px solid rgba(255,255,255,0.06);
+        }
+
+        div[data-baseweb="input"], div[data-baseweb="select"] {
+            border-radius: 10px !important;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 # --------------------------------------------------------------------------
 # Helper functions (ported from the notebook)
@@ -40,13 +148,14 @@ def histogram_boxplot(data, feature, figsize=(10, 6), kde=False, bins=None):
         gridspec_kw={"height_ratios": (0.25, 0.75)},
         figsize=figsize,
     )
-    sns.boxplot(data=data, x=feature, ax=ax_box2, showmeans=True, color="violet")
+    sns.boxplot(data=data, x=feature, ax=ax_box2, showmeans=True, color="#A084EE")
     if bins:
-        sns.histplot(data=data, x=feature, kde=kde, ax=ax_hist2, bins=bins)
+        sns.histplot(data=data, x=feature, kde=kde, ax=ax_hist2, bins=bins, color="#6C63FF")
     else:
-        sns.histplot(data=data, x=feature, kde=kde, ax=ax_hist2)
-    ax_hist2.axvline(data[feature].mean(), color="green", linestyle="--")
-    ax_hist2.axvline(data[feature].median(), color="black", linestyle="-")
+        sns.histplot(data=data, x=feature, kde=kde, ax=ax_hist2, color="#6C63FF")
+    ax_hist2.axvline(data[feature].mean(), color="#38ef7d", linestyle="--", label="mean")
+    ax_hist2.axvline(data[feature].median(), color="#FF6FD8", linestyle="-", label="median")
+    ax_hist2.legend()
     return f2
 
 
@@ -54,7 +163,9 @@ def labeled_barplot(data, feature, figsize=(6, 6), perc=False, n=None):
     total = len(data[feature])
     fig, ax = plt.subplots(figsize=figsize)
     plt.xticks(rotation=90)
-    sns.countplot(data=data, x=feature, order=data[feature].value_counts().index[:n], ax=ax)
+    sns.countplot(
+        data=data, x=feature, order=data[feature].value_counts().index[:n], ax=ax, color="#6C63FF"
+    )
     for p in ax.patches:
         label = "{:.1f}%".format(100 * p.get_height() / total) if perc else int(p.get_height())
         x = p.get_x() + p.get_width() / 2
@@ -99,11 +210,24 @@ def backward_elimination(x_train, y_train, p_threshold=0.05):
     return cols
 
 
+def build_encoded_row(raw_row: dict, X_raw_reference: pd.DataFrame, encoded_columns: list) -> pd.DataFrame:
+    """Take a dict of raw (pre-dummy) feature values and encode it exactly like the
+    training pipeline (add_constant + get_dummies(drop_first=True)), then reindex to
+    match the columns the model was actually trained on."""
+    new_row_raw = pd.DataFrame([raw_row])
+    combined = pd.concat([X_raw_reference, new_row_raw], ignore_index=True)
+    combined_enc = sm.add_constant(combined)
+    combined_enc = pd.get_dummies(combined_enc, drop_first=True)
+    combined_enc = combined_enc.astype(float)
+    combined_enc = combined_enc.reindex(columns=encoded_columns, fill_value=0.0)
+    return combined_enc.tail(1)
+
+
 # --------------------------------------------------------------------------
 # Sidebar: data loading & settings
 # --------------------------------------------------------------------------
 
-st.sidebar.title("⚙️ Settings")
+st.sidebar.markdown("## ⚙️ Settings")
 
 uploaded_file = st.sidebar.file_uploader("Upload firm-level CSV data", type=["csv"])
 
@@ -130,12 +254,15 @@ elif use_sample:
         }
     )
 else:
-    st.title("📊 Firm-Level Sales Regression Explorer")
-    st.info("Upload a CSV file in the sidebar (or tick 'Use a small built-in sample dataset') to get started.")
+    st.markdown(
+        '<div class="hero"><h1>📈 Firm-Level Sales Regression Explorer</h1>'
+        '<p>Upload a CSV file in the sidebar (or tick "Use a small built-in sample dataset") to get started.</p></div>',
+        unsafe_allow_html=True,
+    )
     st.stop()
 
 target_col = st.sidebar.selectbox(
-    "Target (dependent) variable",
+    "🎯 Target (dependent) variable",
     options=data.columns.tolist(),
     index=data.columns.get_loc("sales") if "sales" in data.columns else 0,
 )
@@ -146,21 +273,28 @@ p_threshold = st.sidebar.slider("Backward-elimination p-value threshold", 0.01, 
 drop_na_target = st.sidebar.checkbox(f"Drop rows with missing '{target_col}'", value=True)
 
 st.sidebar.markdown("---")
-st.sidebar.caption("This app mirrors the EDA → cleaning → OLS regression → diagnostics "
-                    "workflow of the original notebook, wrapped in an interactive UI.")
+st.sidebar.caption(
+    "This app mirrors the EDA → cleaning → OLS regression → diagnostics "
+    "workflow of the original notebook, wrapped in a polished, interactive UI."
+)
 
 # --------------------------------------------------------------------------
-# Main title
+# Hero header
 # --------------------------------------------------------------------------
 
-st.title("📊 Firm-Level Sales Regression Explorer")
+st.markdown(
+    '<div class="hero"><h1>📈 Firm-Level Sales Regression Explorer</h1>'
+    '<p>Explore your data, fit an OLS model, check diagnostics, and predict '
+    'sales for any custom combination of inputs — all in one place.</p></div>',
+    unsafe_allow_html=True,
+)
 
 df = data.copy()
 if drop_na_target and target_col in df.columns:
     df = df.dropna(subset=[target_col])
 
 tab_overview, tab_eda, tab_prep, tab_model, tab_diag, tab_predict = st.tabs(
-    ["Overview", "EDA", "Preprocessing", "Model", "Diagnostics", "Predict"]
+    ["🏠 Overview", "🔍 EDA", "🧹 Preprocessing", "📐 Model", "🩺 Diagnostics", "🔮 Predict"]
 )
 
 # --------------------------------------------------------------------------
@@ -173,23 +307,31 @@ with tab_overview:
     c3.metric("Missing values", f"{int(data.isnull().sum().sum()):,}")
     c4.metric("Duplicate rows", f"{int(data.duplicated().sum()):,}")
 
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
     st.subheader("Preview")
     n_rows = st.slider("Rows to preview", 5, 50, 10)
     st.dataframe(data.head(n_rows), use_container_width=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
     col_a, col_b = st.columns(2)
     with col_a:
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
         st.subheader("Data types")
         info_df = pd.DataFrame(
             {"dtype": data.dtypes.astype(str), "non-null": data.notnull().sum(), "nulls": data.isnull().sum()}
         )
         st.dataframe(info_df, use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
     with col_b:
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
         st.subheader("Descriptive statistics")
         st.dataframe(data.describe().T, use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
     st.subheader("Unique value counts")
     st.dataframe(data.nunique().rename("unique values"), use_container_width=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # --------------------------------------------------------------------------
 # EDA tab
@@ -198,23 +340,28 @@ with tab_eda:
     numeric_cols = df.select_dtypes(include=np.number).columns.tolist()
     cat_cols = df.select_dtypes(exclude=np.number).columns.tolist()
 
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
     st.subheader("Univariate: Histogram + Boxplot")
     if numeric_cols:
         feat = st.selectbox("Numeric feature", numeric_cols, key="hist_feat")
         kde = st.checkbox("Show KDE curve", value=False)
         fig = histogram_boxplot(df, feat, kde=kde)
-        st.pyplot(fig)
+        st.pyplot(fig, transparent=True)
         plt.close(fig)
+    st.markdown("</div>", unsafe_allow_html=True)
 
     if cat_cols:
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
         st.subheader("Categorical feature distribution")
         cfeat = st.selectbox("Categorical feature", cat_cols, key="bar_feat")
         perc = st.checkbox("Show percentages", value=True)
         fig2 = labeled_barplot(df, cfeat, perc=perc)
-        st.pyplot(fig2)
+        st.pyplot(fig2, transparent=True)
         plt.close(fig2)
+        st.markdown("</div>", unsafe_allow_html=True)
 
     if cat_cols and numeric_cols:
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
         st.subheader("Numeric feature by category")
         c1, c2 = st.columns(2)
         with c1:
@@ -222,17 +369,21 @@ with tab_eda:
         with c2:
             y_num = st.selectbox("Numeric (y)", numeric_cols, key="box_y")
         fig3, ax3 = plt.subplots(figsize=(6, 5))
-        sns.boxplot(data=df, x=x_cat, y=y_num, ax=ax3)
-        st.pyplot(fig3)
+        sns.boxplot(data=df, x=x_cat, y=y_num, ax=ax3, palette="cool")
+        st.pyplot(fig3, transparent=True)
         plt.close(fig3)
+        st.markdown("</div>", unsafe_allow_html=True)
 
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
     st.subheader("Correlation heatmap")
     if len(numeric_cols) > 1:
         fig4, ax4 = plt.subplots(figsize=(min(15, 1.2 * len(numeric_cols)), 7))
         sns.heatmap(df[numeric_cols].corr(), annot=True, vmin=-1, vmax=1, fmt=".2f", cmap="Spectral", ax=ax4)
-        st.pyplot(fig4)
+        st.pyplot(fig4, transparent=True)
         plt.close(fig4)
+    st.markdown("</div>", unsafe_allow_html=True)
 
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
     st.subheader("Outlier scan (boxplots)")
     if numeric_cols:
         n_cols_grid = 4
@@ -245,13 +396,15 @@ with tab_eda:
         for j in range(len(numeric_cols), len(axes)):
             axes[j].axis("off")
         plt.tight_layout()
-        st.pyplot(fig5)
+        st.pyplot(fig5, transparent=True)
         plt.close(fig5)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # --------------------------------------------------------------------------
 # Preprocessing tab
 # --------------------------------------------------------------------------
 with tab_prep:
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
     st.subheader("Feature matrix construction")
     st.markdown(
         f"- Target: **{target_col}**\n"
@@ -279,12 +432,14 @@ with tab_prep:
     c1, c2 = st.columns(2)
     c1.metric("Train rows", x_train.shape[0])
     c2.metric("Test rows", x_test.shape[0])
+    st.markdown("</div>", unsafe_allow_html=True)
 
     st.session_state["x_train"] = x_train
     st.session_state["x_test"] = x_test
     st.session_state["y_train"] = y_train
     st.session_state["y_test"] = y_test
     st.session_state["X_columns"] = X.columns.tolist()
+    st.session_state["X_raw"] = X_raw
 
 # --------------------------------------------------------------------------
 # Model tab
@@ -299,6 +454,7 @@ with tab_model:
     y_train = st.session_state["y_train"]
     y_test = st.session_state["y_test"]
 
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
     st.subheader("Full model (all features)")
     olsmodel1 = sm.OLS(y_train, x_train).fit()
     with st.expander("Show OLS summary (full model)"):
@@ -311,14 +467,18 @@ with tab_model:
     with c2:
         st.markdown("**Test performance**")
         st.dataframe(model_performance_regression(olsmodel1, x_test, y_test))
+    st.markdown("</div>", unsafe_allow_html=True)
 
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
     st.subheader("Multicollinearity (VIF)")
     try:
         vif_df = checking_vif(x_train)
         st.dataframe(vif_df.sort_values("VIF", ascending=False), use_container_width=True)
     except Exception as e:
         st.warning(f"Could not compute VIF: {e}")
+    st.markdown("</div>", unsafe_allow_html=True)
 
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
     st.subheader("Backward feature elimination")
     st.caption(f"Iteratively drops the feature with the highest p-value while it exceeds {p_threshold:.2f}.")
     selected_features = backward_elimination(x_train, y_train, p_threshold=p_threshold)
@@ -338,8 +498,10 @@ with tab_model:
     with c4:
         st.markdown("**Test performance (reduced model)**")
         st.dataframe(model_performance_regression(olsmodel2, x_test2, y_test))
+    st.markdown("</div>", unsafe_allow_html=True)
 
     st.session_state["olsmodel_final"] = olsmodel2
+    st.session_state["olsmodel_full"] = olsmodel1
     st.session_state["x_train2"] = x_train2
     st.session_state["x_test2"] = x_test2
     st.session_state["selected_features"] = selected_features
@@ -364,31 +526,38 @@ with tab_diag:
         }
     )
 
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
     st.subheader("Fitted vs residuals")
     fig, ax = plt.subplots(figsize=(7, 5))
-    sns.residplot(data=df_pred, x="Fitted Values", y="Residuals", color="purple", lowess=True, ax=ax)
+    sns.residplot(data=df_pred, x="Fitted Values", y="Residuals", color="#A084EE", lowess=True, ax=ax)
     ax.set_title("Fitted vs Residual plot")
-    st.pyplot(fig)
+    st.pyplot(fig, transparent=True)
     plt.close(fig)
+    st.markdown("</div>", unsafe_allow_html=True)
 
     c1, c2 = st.columns(2)
     with c1:
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
         st.subheader("Residual distribution")
         fig2, ax2 = plt.subplots(figsize=(6, 4))
-        sns.histplot(data=df_pred, x="Residuals", kde=True, ax=ax2)
+        sns.histplot(data=df_pred, x="Residuals", kde=True, ax=ax2, color="#6C63FF")
         ax2.set_title("Normality of residuals")
-        st.pyplot(fig2)
+        st.pyplot(fig2, transparent=True)
         plt.close(fig2)
+        st.markdown("</div>", unsafe_allow_html=True)
     with c2:
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
         st.subheader("Q-Q plot")
         fig3, ax3 = plt.subplots(figsize=(6, 4))
         (osm, osr), (slope, intercept, r) = stats.probplot(df_pred["Residuals"], dist="norm")
-        ax3.scatter(osm, osr, s=10)
-        ax3.plot(osm, slope * osm + intercept, color="red")
+        ax3.scatter(osm, osr, s=10, color="#6C63FF")
+        ax3.plot(osm, slope * osm + intercept, color="#FF6FD8")
         ax3.set_title("Q-Q plot")
-        st.pyplot(fig3)
+        st.pyplot(fig3, transparent=True)
         plt.close(fig3)
+        st.markdown("</div>", unsafe_allow_html=True)
 
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
     st.subheader("Statistical tests")
     shapiro_stat, shapiro_p = stats.shapiro(df_pred["Residuals"])
     c3, c4 = st.columns(2)
@@ -402,9 +571,12 @@ with tab_diag:
         c6.metric("Goldfeld-Quandt p-value", f"{gq_p:.4f}")
     except Exception as e:
         st.warning(f"Could not run Goldfeld-Quandt test: {e}")
+    st.markdown("</div>", unsafe_allow_html=True)
 
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
     st.subheader("Residuals table")
     st.dataframe(df_pred.head(20), use_container_width=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # --------------------------------------------------------------------------
 # Predict tab
@@ -414,29 +586,101 @@ with tab_predict:
         st.warning("Please visit the Model tab first.")
         st.stop()
 
-    model = st.session_state["olsmodel_final"]
+    model_final = st.session_state["olsmodel_final"]
+    model_full = st.session_state["olsmodel_full"]
     selected_features = st.session_state["selected_features"]
+    X_columns = st.session_state["X_columns"]
+    X_raw_reference = st.session_state["X_raw"]
 
-    st.subheader("Predict for a new observation")
-    st.caption("Enter values for the features selected by backward elimination.")
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+    st.subheader("🔮 Predict sales for a custom firm")
+    st.caption(
+        "Fill in values for **every original column** in your dataset (numeric inputs for "
+        "numeric columns, dropdowns for categorical ones). You can also add brand-new custom "
+        "columns below — useful for what-if experiments even if they weren't used by the final model."
+    )
 
-    input_vals = {}
-    n_cols_grid = 3
-    cols = st.columns(n_cols_grid)
-    for i, feat in enumerate(selected_features):
-        col = cols[i % n_cols_grid]
-        with col:
-            if feat == "const":
-                input_vals[feat] = 1.0
-                st.write("const = 1 (intercept)")
-            elif feat.endswith("_yes") or set(df.get(feat.rsplit("_", 1)[0], pd.Series(dtype=object)).unique() or []) <= {0, 1}:
-                input_vals[feat] = 1.0 if st.checkbox(feat, value=False) else 0.0
+    numeric_raw_cols = X_raw_reference.select_dtypes(include=np.number).columns.tolist()
+    cat_raw_cols = X_raw_reference.select_dtypes(exclude=np.number).columns.tolist()
+
+    raw_input = {}
+
+    if numeric_raw_cols:
+        st.markdown("#### 🔢 Numeric columns")
+        n_grid = 3
+        cols = st.columns(n_grid)
+        for i, col in enumerate(numeric_raw_cols):
+            default_val = float(X_raw_reference[col].mean())
+            col_min = float(X_raw_reference[col].min())
+            col_max = float(X_raw_reference[col].max())
+            with cols[i % n_grid]:
+                raw_input[col] = st.number_input(
+                    col,
+                    value=round(default_val, 3),
+                    help=f"Observed range: {col_min:.2f} – {col_max:.2f}",
+                    key=f"num_{col}",
+                )
+
+    if cat_raw_cols:
+        st.markdown("#### 🏷️ Categorical columns")
+        n_grid = 3
+        cols = st.columns(n_grid)
+        for i, col in enumerate(cat_raw_cols):
+            options = sorted(X_raw_reference[col].dropna().unique().tolist())
+            with cols[i % n_grid]:
+                raw_input[col] = st.selectbox(col, options=options, key=f"cat_{col}")
+
+    with st.expander("➕ Add custom / extra columns"):
+        st.caption(
+            "Add any additional column name & value here. If it matches a column the model "
+            "was trained on it will be used; otherwise it's ignored by the model but still "
+            "shown in the input summary below."
+        )
+        n_custom = st.number_input("How many custom columns to add?", min_value=0, max_value=10, value=0, step=1)
+        for i in range(int(n_custom)):
+            c1, c2 = st.columns(2)
+            with c1:
+                custom_name = st.text_input(f"Custom column {i+1} name", key=f"custom_name_{i}")
+            with c2:
+                custom_value = st.text_input(f"Custom column {i+1} value", key=f"custom_value_{i}")
+            if custom_name:
+                try:
+                    raw_input[custom_name] = float(custom_value)
+                except (TypeError, ValueError):
+                    raw_input[custom_name] = custom_value
+
+    predict_col1, predict_col2 = st.columns([1, 2])
+    with predict_col1:
+        model_choice = st.radio(
+            "Model to use",
+            options=["Reduced model (backward elimination)", "Full model (all features)"],
+            index=0,
+        )
+    with predict_col2:
+        st.write("")
+        do_predict = st.button("✨ Predict Sales", type="primary")
+
+    if do_predict:
+        try:
+            encoded_row = build_encoded_row(raw_input, X_raw_reference, X_columns)
+            if model_choice.startswith("Reduced"):
+                row_for_model = encoded_row[selected_features]
+                prediction = model_final.predict(row_for_model)
             else:
-                default_val = float(df[feat].mean()) if feat in df.columns else 0.0
-                input_vals[feat] = st.number_input(feat, value=round(default_val, 2))
+                prediction = model_full.predict(encoded_row)
 
-    if st.button("Predict", type="primary"):
-        new_row = pd.DataFrame([input_vals])[selected_features]
-        prediction = model.predict(new_row)
-        st.success(f"Predicted {target_col}: **{prediction.iloc[0]:.4f}**")
-        st.dataframe(new_row, use_container_width=True)
+            st.markdown(
+                f'<div class="prediction-banner">📈 Predicted {target_col}: '
+                f'{prediction.iloc[0]:,.4f}</div>',
+                unsafe_allow_html=True,
+            )
+
+            with st.expander("Show raw input & encoded feature row used"):
+                st.markdown("**Raw input values**")
+                st.dataframe(pd.DataFrame([raw_input]), use_container_width=True)
+                st.markdown("**Encoded row (as fed to the model)**")
+                st.dataframe(encoded_row, use_container_width=True)
+        except Exception as e:
+            st.error(f"Could not compute prediction: {e}")
+
+    st.markdown("</div>", unsafe_allow_html=True)
