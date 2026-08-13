@@ -23,9 +23,10 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 import streamlit as st
 
 sns.set_theme(style="whitegrid", palette="viridis")
-plt.rcParams["figure.facecolor"] = "none"
-plt.rcParams["axes.facecolor"] = "none"
-plt.rcParams["savefig.facecolor"] = "none"
+plt.rcParams["figure.facecolor"] = "#ffffff"
+plt.rcParams["axes.facecolor"] = "#ffffff"
+plt.rcParams["savefig.facecolor"] = "#ffffff"
+plt.rcParams["font.family"] = "DejaVu Sans"
 
 st.set_page_config(
     page_title="Sales Intelligence | Regression Explorer",
@@ -43,14 +44,15 @@ st.markdown(
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
         :root {
-            --primary: #6d5dfc;
-            --primary-2: #8b7cff;
-            --accent: #00c2a8;
-            --pink: #ff5ca8;
-            --text: #172033;
-            --muted: #667085;
-            --card: rgba(255,255,255,.92);
-            --border: rgba(108,99,255,.14);
+            --navy: #172554;
+            --ink: #172033;
+            --muted: #64748b;
+            --purple: #6d5dfc;
+            --blue: #2563eb;
+            --green: #16a34a;
+            --orange: #f59e0b;
+            --red: #ef4444;
+            --border: #e8eaf2;
         }
 
         html, body, [class*="css"] {
@@ -58,94 +60,153 @@ st.markdown(
         }
 
         .stApp {
-            background:
-                radial-gradient(circle at 5% 0%, rgba(109,93,252,.12), transparent 28%),
-                radial-gradient(circle at 95% 5%, rgba(255,92,168,.10), transparent 25%),
-                linear-gradient(180deg, #f8f9ff 0%, #f4f6fb 100%);
+            background: #f7f8fc;
+            color: var(--ink);
         }
 
         [data-testid="stHeader"] {
             background: transparent;
         }
 
+        #MainMenu, footer {
+            visibility: hidden;
+        }
+
         section[data-testid="stSidebar"] {
-            background: linear-gradient(180deg, #171a2b 0%, #222642 100%);
-            border-right: 0;
+            background: #ffffff;
+            border-right: 1px solid var(--border);
         }
 
-        section[data-testid="stSidebar"] * {
-            color: #f8f9ff !important;
+        section[data-testid="stSidebar"] > div {
+            padding-top: 1.5rem;
         }
 
-        section[data-testid="stSidebar"] [data-baseweb="select"] > div,
-        section[data-testid="stSidebar"] input {
-            background: rgba(255,255,255,.09) !important;
-            border: 1px solid rgba(255,255,255,.12) !important;
+        section[data-testid="stSidebar"] h2,
+        section[data-testid="stSidebar"] h3 {
+            color: var(--navy);
+            font-weight: 800;
+        }
+
+        .app-brand {
+            padding: 0.4rem 0.4rem 1.2rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1rem;
+        }
+
+        .app-brand-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--navy);
+        }
+
+        .app-brand-subtitle {
+            font-size: .78rem;
+            color: var(--muted);
+            margin-top: .25rem;
         }
 
         .hero {
-            position: relative;
-            overflow: hidden;
-            background: linear-gradient(135deg, #5146d8 0%, #7567f5 48%, #c653c9 100%);
-            padding: 2.5rem 2.4rem;
-            border-radius: 24px;
-            margin: .4rem 0 1.7rem;
-            box-shadow: 0 18px 45px rgba(81,70,216,.24);
-        }
-
-        .hero:after {
-            content: "";
-            position: absolute;
-            width: 240px;
-            height: 240px;
-            right: -70px;
-            top: -110px;
-            border-radius: 50%;
-            background: rgba(255,255,255,.13);
+            background: linear-gradient(135deg, #ffffff 0%, #f2efff 100%);
+            border: 1px solid #e4e1ff;
+            border-radius: 22px;
+            padding: 2rem 2.2rem;
+            margin: .3rem 0 1.35rem;
+            box-shadow: 0 10px 30px rgba(23,37,84,.06);
         }
 
         .hero h1 {
-            position: relative;
-            z-index: 1;
-            color: white;
+            color: var(--navy);
             font-weight: 800;
             font-size: 2.25rem;
-            letter-spacing: -.04em;
+            letter-spacing: -.045em;
             margin: 0;
         }
 
+        .hero h1 span {
+            color: var(--purple);
+        }
+
         .hero p {
-            position: relative;
-            z-index: 1;
-            color: rgba(255,255,255,.88);
-            margin: .55rem 0 0;
+            color: var(--muted);
             font-size: 1rem;
-            max-width: 820px;
+            margin: .55rem 0 0;
+            max-width: 780px;
         }
 
-        .section-title {
-            font-size: 1.35rem;
+        .workflow {
+            display: flex;
+            gap: .65rem;
+            align-items: center;
+            flex-wrap: wrap;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: .75rem;
+            margin-bottom: 1.15rem;
+            box-shadow: 0 5px 18px rgba(23,37,84,.045);
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: .55rem;
+            padding: .65rem .9rem;
+            border-radius: 12px;
+            font-weight: 700;
+            color: var(--navy);
+        }
+
+        .step.active {
+            background: #eeeaff;
+            color: #5847df;
+        }
+
+        .step-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #eef2ff;
+            color: #4f46e5;
             font-weight: 800;
-            color: var(--text);
-            margin: .6rem 0 1rem;
         }
 
-        .glass-card {
-            background: var(--card);
+        .step.active .step-number {
+            background: var(--purple);
+            color: white;
+        }
+
+        .arrow {
+            color: #a1aabd;
+            font-size: 1.2rem;
+        }
+
+        .section-card {
+            background: #fff;
             border: 1px solid var(--border);
             border-radius: 18px;
-            padding: 1.25rem 1.35rem;
+            padding: 1.15rem 1.25rem;
             margin-bottom: 1rem;
-            box-shadow: 0 8px 28px rgba(31,41,55,.07);
-            backdrop-filter: blur(12px);
+            box-shadow: 0 6px 22px rgba(23,37,84,.045);
+        }
+
+        .section-label {
+            color: var(--navy);
+            font-size: .86rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            margin-bottom: .75rem;
         }
 
         div[data-testid="stMetric"] {
-            background: rgba(255,255,255,.92);
-            border: 1px solid rgba(108,99,255,.13);
-            border-radius: 18px;
-            padding: 1rem 1rem .75rem;
-            box-shadow: 0 7px 22px rgba(31,41,55,.06);
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: .95rem 1rem .7rem;
+            box-shadow: 0 5px 18px rgba(23,37,84,.045);
         }
 
         div[data-testid="stMetricLabel"] {
@@ -154,58 +215,76 @@ st.markdown(
         }
 
         div[data-testid="stMetricValue"] {
-            color: var(--text);
+            color: var(--navy);
             font-weight: 800;
         }
 
+        .insight-card {
+            background: #f8f7ff;
+            border-left: 4px solid var(--purple);
+            border-radius: 12px;
+            padding: 1rem 1.1rem;
+            margin: .6rem 0;
+        }
+
+        .insight-title {
+            color: var(--navy);
+            font-weight: 800;
+            margin-bottom: .25rem;
+        }
+
+        .insight-text {
+            color: #526174;
+            font-size: .92rem;
+            line-height: 1.5;
+        }
+
+        .prediction-banner {
+            background: linear-gradient(135deg, #166534 0%, #16a34a 100%);
+            border-radius: 18px;
+            padding: 1.35rem 1.5rem;
+            color: white;
+            font-weight: 800;
+            font-size: 1.4rem;
+            box-shadow: 0 12px 28px rgba(22,163,74,.18);
+            margin: .7rem 0 1rem;
+        }
+
         .stTabs [data-baseweb="tab-list"] {
-            gap: 8px;
-            background: rgba(255,255,255,.7);
-            padding: 6px;
+            gap: 6px;
+            background: #fff;
+            border: 1px solid var(--border);
             border-radius: 14px;
-            border: 1px solid rgba(108,99,255,.10);
+            padding: 5px;
         }
 
         .stTabs [data-baseweb="tab"] {
             border-radius: 10px;
-            padding: 9px 17px;
+            padding: 9px 16px;
             font-weight: 700;
-            color: #667085;
+            color: #64748b;
         }
 
         .stTabs [aria-selected="true"] {
-            background: linear-gradient(135deg, #6d5dfc, #8b7cff) !important;
-            color: white !important;
+            background: var(--purple) !important;
+            color: #fff !important;
         }
 
-        .stButton > button, .stDownloadButton > button {
+        .stButton > button,
+        .stDownloadButton > button {
+            background: var(--purple);
+            color: white;
             border: 0;
-            border-radius: 11px;
-            padding: .62rem 1.35rem;
+            border-radius: 10px;
             font-weight: 700;
-            background: linear-gradient(135deg, #6d5dfc, #8b7cff);
+            padding: .6rem 1.25rem;
+            box-shadow: 0 7px 18px rgba(109,93,252,.18);
+        }
+
+        .stButton > button:hover,
+        .stDownloadButton > button:hover {
+            background: #5847df;
             color: white;
-            box-shadow: 0 8px 20px rgba(109,93,252,.24);
-        }
-
-        .stButton > button:hover, .stDownloadButton > button:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 11px 25px rgba(109,93,252,.32);
-        }
-
-        .prediction-banner {
-            background: linear-gradient(135deg, #00a98f 0%, #00c2a8 52%, #42d6b8 100%);
-            border-radius: 18px;
-            padding: 1.45rem 1.6rem;
-            color: white;
-            font-weight: 800;
-            font-size: 1.45rem;
-            box-shadow: 0 14px 32px rgba(0,194,168,.22);
-            margin: .7rem 0 1.2rem;
-        }
-
-        .stAlert {
-            border-radius: 14px;
         }
 
         div[data-baseweb="input"],
@@ -213,14 +292,12 @@ st.markdown(
             border-radius: 10px !important;
         }
 
-        .stDataFrame {
-            border-radius: 12px;
-            overflow: hidden;
+        .footer-note {
+            text-align: center;
+            color: #94a3b8;
+            font-size: .78rem;
+            padding: 1.4rem 0 .4rem;
         }
-
-        /* Hide Streamlit's default footer/menu for a cleaner demo look */
-        #MainMenu { visibility: hidden; }
-        footer { visibility: hidden; }
     </style>
     """,
     unsafe_allow_html=True,
@@ -317,6 +394,13 @@ def build_encoded_row(raw_row: dict, X_raw_reference: pd.DataFrame, encoded_colu
 # Sidebar: data loading & settings
 # --------------------------------------------------------------------------
 
+st.sidebar.markdown(
+    '<div class="app-brand">'
+    '<div class="app-brand-title">📊 Sales Intelligence</div>'
+    '<div class="app-brand-subtitle">Firm-level regression & decision support</div>'
+    '</div>',
+    unsafe_allow_html=True,
+)
 st.sidebar.markdown("## ⚙️ Settings")
 
 uploaded_file = st.sidebar.file_uploader("Upload firm-level CSV data", type=["csv"])
@@ -373,9 +457,26 @@ st.sidebar.caption(
 # --------------------------------------------------------------------------
 
 st.markdown(
-    '<div class="hero"><h1>📈 Firm-Level Sales Regression Explorer</h1>'
-    '<p>Explore your data, fit an OLS model, check diagnostics, and predict '
-    'sales for any custom combination of inputs — all in one place.</p></div>',
+    '<div class="hero">'
+    '<h1>Firm-Level Sales <span>Regression Explorer</span></h1>'
+    '<p>Executive analytics view for understanding sales drivers, validating a Linear OLS model, '
+    'and generating data-driven sales predictions.</p>'
+    '</div>',
+    unsafe_allow_html=True,
+)
+
+st.markdown(
+    '<div class="workflow">'
+    '<div class="step active"><span class="step-number">1</span> Explore</div>'
+    '<div class="arrow">→</div>'
+    '<div class="step"><span class="step-number">2</span> Prepare</div>'
+    '<div class="arrow">→</div>'
+    '<div class="step"><span class="step-number">3</span> Model</div>'
+    '<div class="arrow">→</div>'
+    '<div class="step"><span class="step-number">4</span> Validate</div>'
+    '<div class="arrow">→</div>'
+    '<div class="step"><span class="step-number">5</span> Predict</div>'
+    '</div>',
     unsafe_allow_html=True,
 )
 
@@ -408,6 +509,16 @@ with tab_overview:
     c2.metric("Columns", f"{data.shape[1]:,}")
     c3.metric("Missing values", f"{int(data.isnull().sum().sum()):,}")
     c4.metric("Duplicate rows", f"{int(data.duplicated().sum()):,}")
+
+    st.markdown(
+        '<div class="insight-card">'
+        '<div class="insight-title">Executive lens</div>'
+        '<div class="insight-text">Use the dashboard to move from data quality → sales drivers → '
+        'model validation → prediction. Focus the discussion on business interpretation, '
+        'model reliability, and actionable drivers rather than only model accuracy.</div>'
+        '</div>',
+        unsafe_allow_html=True,
+    )
 
     st.markdown('<div class="glass-card">', unsafe_allow_html=True)
     st.subheader("Preview")
@@ -786,3 +897,7 @@ with tab_predict:
             st.error(f"Could not compute prediction: {e}")
 
     st.markdown("</div>", unsafe_allow_html=True)
+st.markdown(
+    '<div class="footer-note">Firm Sales Prediction Model • Linear Regression • Built for analytical decision support</div>',
+    unsafe_allow_html=True,
+)
