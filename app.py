@@ -214,9 +214,13 @@ else:
 
 st.sidebar.info(data_source_label)
 
-# Basic cleaning: drop fully-empty rows/cols
+# Basic cleaning: drop fully-empty rows/cols, de-duplicate column names
 df = df_raw.copy()
 df = df.dropna(axis=1, how="all")
+if df.columns.duplicated().any():
+    dup_cols = df.columns[df.columns.duplicated()].unique().tolist()
+    st.sidebar.warning(f"Duplicate column names found and de-duplicated: {dup_cols}")
+    df = df.loc[:, ~df.columns.duplicated()]
 
 numeric_cols_all = df.select_dtypes(include=np.number).columns.tolist()
 categorical_cols_all = [c for c in df.columns if c not in numeric_cols_all]
@@ -370,15 +374,21 @@ with tab_viz:
                               index=numeric_cols_all.index(target_col) if target_col in numeric_cols_all else 0)
     with col3:
         color_var = st.selectbox("Color by", ["None"] + categorical_cols_all)
-    fig = px.scatter(
-        df, x=x_var, y=y_var,
-        color=None if color_var == "None" else color_var,
-        trendline="ols",
-        color_discrete_sequence=PALETTE,
-        opacity=0.75,
-        title=f"{y_var} vs {x_var}",
-    )
-    st.plotly_chart(style_fig(fig), use_container_width=True)
+
+    if x_var == y_var:
+        st.warning("Please select two **different** variables for the X and Y axes.")
+    else:
+        scatter_cols = [x_var, y_var] + ([color_var] if color_var != "None" else [])
+        scatter_df = df.loc[:, ~df.columns.duplicated()][scatter_cols].copy()
+        fig = px.scatter(
+            scatter_df, x=x_var, y=y_var,
+            color=None if color_var == "None" else color_var,
+            trendline="ols",
+            color_discrete_sequence=PALETTE,
+            opacity=0.75,
+            title=f"{y_var} vs {x_var}",
+        )
+        st.plotly_chart(style_fig(fig), use_container_width=True)
 
     if categorical_cols_all:
         st.write("")
