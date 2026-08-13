@@ -24,173 +24,252 @@ st.set_page_config(
 # ============================================================
 st.markdown("""
 <style>
-    .stApp {
-        background: #F6F8FB;
-        color: #172033;
-    }
+/* ============================================================
+   COLOURFUL PROFESSIONAL LIGHT THEME
+   ============================================================ */
 
-   .block-container {
-    padding: 2.4rem 2.2rem 2rem 2.2rem;
+.stApp {
+    background: linear-gradient(135deg, #F7FAFF 0%, #FDFBFF 100%);
+    color: #172033;
 }
-    /* Top navigation */
-  .topbar {
-    background: #FFFFFF;
-    border: 1px solid #E3E8EF;
+
+.block-container {
+    padding: 0.4rem 2.2rem 2rem 2.2rem;
+    max-width: 1500px;
+}
+
+/* ================= TOP NAVIGATION ================= */
+
+.topbar {
+    background: linear-gradient(90deg, #FFFFFF 0%, #F4F8FF 100%);
+    border: 1px solid #DCE6F5;
     border-radius: 14px;
-    padding: 10px 18px;
-    margin-bottom: 14px;
-    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+    padding: 12px 18px;
+    margin-bottom: 18px;
+    box-shadow: 0 4px 14px rgba(47, 107, 186, 0.08);
 }
-    .brand {
-        font-size: 20px;
-        font-weight: 750;
-        color: #173B6C;
-        letter-spacing: -0.3px;
-    }
 
-    .subbrand {
-        color: #6B7280;
-        font-size: 12px;
-        margin-top: 2px;
-    }
+.brand {
+    font-size: 21px;
+    font-weight: 800;
+    color: #173B6C;
+    letter-spacing: -0.4px;
+}
 
-    /* KPI cards */
-    .kpi-card {
-        background: #FFFFFF;
-        border: 1px solid #E3E8EF;
-        border-radius: 12px;
-        padding: 18px 20px;
-        min-height: 112px;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.035);
-    }
+.subbrand {
+    color: #718096;
+    font-size: 12px;
+    margin-top: 3px;
+}
 
-    .kpi-label {
-        color: #667085;
-        font-size: 12px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: .7px;
-    }
+/* ================= BOOKMARK NAVIGATION ================= */
 
-    .kpi-value {
-        color: #173B6C;
-        font-size: 28px;
-        font-weight: 750;
-        margin-top: 7px;
-    }
+.bookmark-label {
+    color: #526581;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 3px 0 8px 2px;
+}
 
-    .kpi-caption {
-        color: #8A94A6;
-        font-size: 11px;
-        margin-top: 4px;
-    }
+.stButton > button {
+    border: 1px solid #D5DEED;
+    background: #FFFFFF;
+    color: #38506F;
+    border-radius: 9px;
+    font-weight: 650;
+    min-height: 38px;
+    transition: all 0.2s ease;
+}
 
-    /* Section cards */
-    .section-card {
-        background: #FFFFFF;
-        border: 1px solid #E3E8EF;
-        border-radius: 14px;
-        padding: 20px;
-        margin-bottom: 18px;
-        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.035);
-    }
+.stButton > button:hover {
+    border-color: #4F86C6;
+    color: #173B6C;
+    background: #EDF5FF;
+    box-shadow: 0 3px 8px rgba(79, 134, 198, 0.12);
+}
 
-    .section-title {
-        color: #173B6C;
-        font-size: 17px;
-        font-weight: 720;
-        margin-bottom: 3px;
-    }
+/* ================= KPI CARDS ================= */
 
-    .section-subtitle {
-        color: #667085;
-        font-size: 12px;
-        margin-bottom: 14px;
-    }
+.kpi-card {
+    background: #FFFFFF;
+    border: 1px solid #DDE6F2;
+    border-radius: 13px;
+    padding: 18px 20px;
+    min-height: 112px;
+    box-shadow: 0 4px 12px rgba(31, 55, 90, 0.055);
+    position: relative;
+    overflow: hidden;
+}
 
-    /* Bookmark bar */
-    .bookmark-label {
-        color: #667085;
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: .8px;
-        margin: 3px 0 8px 2px;
-    }
+.kpi-card::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, #3B82F6, #8B5CF6);
+}
 
-    /* Buttons */
-    .stButton > button {
-        border: 1px solid #D8DEE8;
-        background: #FFFFFF;
-        color: #344054;
-        border-radius: 8px;
-        font-weight: 600;
-        min-height: 38px;
-    }
+.kpi-label {
+    color: #667085;
+    font-size: 11px;
+    font-weight: 750;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
 
-    .stButton > button:hover {
-        border-color: #2F6BBA;
-        color: #173B6C;
-        background: #F4F8FD;
-    }
+.kpi-value {
+    color: #173B6C;
+    font-size: 28px;
+    font-weight: 800;
+    margin-top: 7px;
+}
 
-    /* Tabs */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 5px;
-        background: #FFFFFF;
-        border: 1px solid #E3E8EF;
-        border-radius: 12px;
-        padding: 5px;
-        margin-bottom: 18px;
-    }
+.kpi-caption {
+    color: #8A94A6;
+    font-size: 11px;
+    margin-top: 4px;
+}
 
-    .stTabs [data-baseweb="tab"] {
-        height: 38px;
-        border-radius: 8px;
-        color: #667085;
-        font-weight: 600;
-        padding: 0 17px;
-    }
+/* ================= SECTION CARDS ================= */
 
-    .stTabs [aria-selected="true"] {
-        background: #EAF2FC;
-        color: #173B6C !important;
-    }
+.section-card {
+    background: #FFFFFF;
+    border: 1px solid #DDE6F2;
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 18px;
+    box-shadow: 0 4px 14px rgba(31, 55, 90, 0.045);
+}
 
-    /* Metric */
-    [data-testid="stMetric"] {
-        background: #FFFFFF;
-        border: 1px solid #E3E8EF;
-        border-radius: 12px;
-        padding: 12px 16px;
-    }
+.section-title {
+    color: #173B6C;
+    font-size: 18px;
+    font-weight: 750;
+    margin-bottom: 3px;
+}
 
-    [data-testid="stMetricLabel"] {
-        color: #667085 !important;
-    }
+.section-subtitle {
+    color: #718096;
+    font-size: 12px;
+    margin-bottom: 14px;
+}
 
-    [data-testid="stMetricValue"] {
-        color: #173B6C !important;
-    }
+/* ================= STREAMLIT TABS ================= */
 
-    /* Alerts */
-    .insight {
-        background: #F2F7FC;
-        border-left: 4px solid #2F6BBA;
-        border-radius: 7px;
-        padding: 12px 15px;
-        color: #344054;
-        font-size: 13px;
-        line-height: 1.55;
-        margin: 10px 0;
-    }
+.stTabs [data-baseweb="tab-list"] {
+    gap: 5px;
+    background: #FFFFFF;
+    border: 1px solid #DDE6F2;
+    border-radius: 12px;
+    padding: 5px;
+    margin-bottom: 18px;
+}
 
-    .footer {
-        color: #98A2B3;
-        font-size: 11px;
-        text-align: center;
-        padding: 18px 0 4px 0;
-    }
+.stTabs [data-baseweb="tab"] {
+    height: 38px;
+    border-radius: 8px;
+    color: #667085;
+    font-weight: 650;
+    padding: 0 17px;
+}
+
+.stTabs [aria-selected="true"] {
+    background: linear-gradient(90deg, #E7F0FF, #F0EAFF);
+    color: #173B6C !important;
+}
+
+/* ================= STREAMLIT METRICS ================= */
+
+[data-testid="stMetric"] {
+    background: #FFFFFF;
+    border: 1px solid #DDE6F2;
+    border-radius: 12px;
+    padding: 13px 16px;
+    box-shadow: 0 3px 10px rgba(31, 55, 90, 0.04);
+}
+
+[data-testid="stMetricLabel"] {
+    color: #667085 !important;
+}
+
+[data-testid="stMetricValue"] {
+    color: #173B6C !important;
+}
+
+/* ================= INSIGHT BOX ================= */
+
+.insight {
+    background: linear-gradient(90deg, #EFF7FF, #F8F4FF);
+    border-left: 4px solid #5B7FC4;
+    border-radius: 8px;
+    padding: 13px 16px;
+    color: #344054;
+    font-size: 13px;
+    line-height: 1.6;
+    margin: 10px 0;
+}
+
+/* ================= SELECTBOX / INPUTS ================= */
+
+.stSelectbox > div > div,
+.stNumberInput > div > div {
+    background: #FFFFFF;
+    border-color: #D5DEED;
+    border-radius: 8px;
+}
+
+.stSelectbox label,
+.stNumberInput label,
+.stSlider label,
+.stFileUploader label {
+    color: #475467 !important;
+    font-weight: 600 !important;
+}
+
+/* ================= DATAFRAME ================= */
+
+[data-testid="stDataFrame"] {
+    border: 1px solid #DDE6F2;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+/* ================= HEADINGS ================= */
+
+h1, h2, h3 {
+    color: #173B6C;
+}
+
+h4, h5, h6 {
+    color: #344054;
+}
+
+/* ================= SUCCESS / WARNING / INFO ================= */
+
+[data-testid="stAlert"] {
+    border-radius: 9px;
+}
+
+/* ================= FOOTER ================= */
+
+.footer {
+    color: #98A2B3;
+    font-size: 11px;
+    text-align: center;
+    padding: 18px 0 4px 0;
+}
+
+/* ================= DIVIDER ================= */
+
+hr {
+    border: none;
+    border-top: 1px solid #E1E7F0;
+    margin: 12px 0 18px 0;
+}
 </style>
 """, unsafe_allow_html=True)
 
