@@ -27,356 +27,226 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-:root {
-    --navy:#172554;
-    --ink:#182338;
-    --muted:#667085;
-    --purple:#6957e8;
-    --purple2:#8878f4;
-    --lav:#f1efff;
-    --blue:#2f6fed;
-    --green:#20a05a;
-    --orange:#ef9b22;
-    --red:#e45567;
-    --line:#e8ebf2;
-    --bg:#f7f8fc;
+:root{
+ --bg:#f6f7fb;
+ --surface:#ffffff;
+ --navy:#172554;
+ --ink:#1f2937;
+ --muted:#6b7280;
+ --line:#e9ebf2;
+ --purple:#6657d9;
+ --purple-soft:#f0edff;
+ --blue:#3675e8;
+ --green:#19965a;
+ --green-soft:#eaf8f0;
+ --amber:#df941f;
+ --amber-soft:#fff5e6;
+ --red:#d95768;
 }
 
-* { font-family: Inter, sans-serif; }
-.stApp { background:var(--bg); color:var(--ink); }
-#MainMenu, footer, header { visibility:hidden; }
+*{font-family:'Inter',sans-serif;}
+.stApp{background:var(--bg);color:var(--ink);}
+#MainMenu,header,footer{visibility:hidden;}
 
-section[data-testid="stSidebar"] {
-    background:#fff;
-    border-right:1px solid var(--line);
+section[data-testid="stSidebar"]{
+ background:#fff;
+ border-right:1px solid var(--line);
 }
-section[data-testid="stSidebar"] > div {
-    padding:1.15rem 1rem;
-}
+section[data-testid="stSidebar"]>div{padding:1rem .9rem;}
 
-.brand {
-    padding:.35rem .25rem 1rem;
-    border-bottom:1px solid var(--line);
-    margin-bottom:1rem;
+.brand{
+ padding:.35rem .2rem 1rem;
+ border-bottom:1px solid var(--line);
+ margin-bottom:1rem;
 }
-.brand-icon {
-    display:inline-flex;
-    width:38px;height:38px;
-    align-items:center;justify-content:center;
-    border-radius:11px;
-    background:#eeeaff;
-    color:var(--purple);
-    font-size:1.15rem;
-    margin-right:.5rem;
+.brand-row{display:flex;align-items:center;gap:.65rem;}
+.brand-icon{
+ width:38px;height:38px;border-radius:12px;
+ display:flex;align-items:center;justify-content:center;
+ background:var(--purple-soft);color:var(--purple);
+ font-size:1.1rem;
 }
-.brand-title {
-    font-weight:800;
-    color:var(--navy);
-    font-size:1.08rem;
-}
-.brand-subtitle {
-    color:#7c8799;
-    font-size:.72rem;
-    margin-top:.22rem;
-    line-height:1.35;
-}
+.brand-title{font-size:1.03rem;font-weight:800;color:var(--navy);}
+.brand-sub{font-size:.69rem;color:#8992a3;margin-top:.18rem;}
 
-.side-heading {
-    color:var(--purple);
-    font-size:.7rem;
-    font-weight:800;
-    letter-spacing:.1em;
-    text-transform:uppercase;
-    margin:1.1rem 0 .55rem;
+.side-heading{
+ color:#7568d9;
+ font-size:.66rem;font-weight:800;
+ letter-spacing:.1em;text-transform:uppercase;
+ margin:1rem 0 .45rem;
 }
-.side-card {
-    background:#fafaff;
-    border:1px solid #ece9ff;
-    border-radius:13px;
-    padding:.75rem .8rem;
-    margin-top:.55rem;
+.side-card{
+ background:#fafaff;border:1px solid #ece9fb;
+ border-radius:12px;padding:.65rem .75rem;
 }
-.side-row {
-    display:flex;
-    justify-content:space-between;
-    padding:.25rem 0;
-    color:#6b7485;
-    font-size:.76rem;
+.side-row{
+ display:flex;justify-content:space-between;
+ color:#737d8e;font-size:.72rem;padding:.24rem 0;
 }
-.side-row b { color:#1d2942; }
+.side-row b{color:#263249;}
 
-.hero {
-    background:
-        radial-gradient(circle at 88% 18%, rgba(105,87,232,.14), transparent 20%),
-        linear-gradient(135deg,#fff 0%,#f1efff 100%);
-    border:1px solid #e5e1ff;
-    border-radius:24px;
-    padding:1.7rem 2rem;
-    box-shadow:0 12px 32px rgba(25,35,65,.055);
-    position:relative;
-    overflow:hidden;
-    margin-bottom:1rem;
+.hero{
+ background:linear-gradient(135deg,#fff 0%,#f3f1ff 100%);
+ border:1px solid #e7e3fb;
+ border-radius:22px;
+ padding:1.45rem 1.7rem;
+ box-shadow:0 10px 28px rgba(27,35,65,.055);
+ margin-bottom:.85rem;
 }
-.hero-grid {
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:1.5rem;
+.hero-grid{
+ display:flex;align-items:center;justify-content:space-between;
+ gap:1rem;
 }
-.hero h1 {
-    margin:0;
-    color:var(--navy);
-    font-size:2.15rem;
-    line-height:1.08;
-    font-weight:800;
-    letter-spacing:-.045em;
+.hero h1{
+ margin:0;color:var(--navy);
+ font-size:2rem;font-weight:800;
+ letter-spacing:-.045em;line-height:1.1;
 }
-.hero h1 span { color:var(--purple); }
-.hero p {
-    color:#697589;
-    font-size:.92rem;
-    line-height:1.5;
-    max-width:720px;
-    margin:.55rem 0 0;
+.hero h1 span{color:var(--purple);}
+.hero p{
+ margin:.5rem 0 0;max-width:720px;
+ color:#6d7789;font-size:.87rem;line-height:1.5;
 }
-.hero-visual {
-    min-width:220px;
-    text-align:center;
+.hero-badge{
+ display:inline-flex;align-items:center;gap:.35rem;
+ background:#fff;border:1px solid #e5e1fa;
+ border-radius:999px;padding:.42rem .7rem;
+ color:var(--purple);font-size:.68rem;font-weight:800;
+ margin-bottom:.65rem;
 }
-.bar {
-    display:inline-block;
-    width:19px;
-    margin:0 3px;
-    border-radius:7px 7px 2px 2px;
-    background:linear-gradient(180deg,#9b8ff5,#6957e8);
-    vertical-align:bottom;
+.hero-visual{min-width:180px;text-align:center;}
+.mini-bars{height:78px;display:flex;align-items:end;justify-content:center;gap:5px;}
+.mini-bar{
+ width:16px;border-radius:5px 5px 2px 2px;
+ background:linear-gradient(180deg,#a59af0,#6657d9);
 }
-.growth {
-    color:var(--purple);
-    font-size:.72rem;
-    font-weight:800;
-    margin-top:.35rem;
-}
+.hero-visual-label{font-size:.63rem;color:#7d8798;font-weight:800;margin-top:.25rem;}
 
-.workflow {
-    display:flex;
-    align-items:center;
-    background:#fff;
-    border:1px solid var(--line);
-    border-radius:17px;
-    padding:.55rem;
-    box-shadow:0 6px 20px rgba(25,35,65,.045);
-    margin-bottom:1rem;
-    overflow-x:auto;
+.workflow{
+ display:flex;align-items:center;gap:.2rem;
+ background:#fff;border:1px solid var(--line);
+ border-radius:15px;padding:.45rem;
+ box-shadow:0 5px 18px rgba(27,35,65,.04);
+ margin-bottom:.9rem;
+ overflow:auto;
 }
-.step {
-    flex:1;
-    min-width:130px;
-    display:flex;
-    align-items:center;
-    gap:.55rem;
-    padding:.65rem .7rem;
-    border-radius:12px;
+.step{
+ flex:1;min-width:115px;
+ display:flex;align-items:center;gap:.5rem;
+ padding:.55rem .65rem;border-radius:10px;
 }
-.step.active { background:var(--lav); }
-.step-num {
-    width:31px;height:31px;
-    flex:0 0 31px;
-    border-radius:50%;
-    background:#edf1ff;
-    color:#5262c8;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-weight:800;
+.step.active{background:var(--purple-soft);}
+.step-num{
+ width:29px;height:29px;flex:0 0 29px;border-radius:50%;
+ display:flex;align-items:center;justify-content:center;
+ background:#eef1ff;color:#5e67b8;font-size:.73rem;font-weight:800;
 }
-.step.active .step-num { background:var(--purple); color:#fff; }
-.step-title { color:#17213d; font-weight:800; font-size:.8rem; }
-.step-desc { color:#788397; font-size:.65rem; margin-top:.08rem; }
-.arrow { color:#aab2c2; font-size:1.15rem; }
+.step.active .step-num{background:var(--purple);color:#fff;}
+.step-title{font-size:.76rem;font-weight:800;color:#263249;}
+.step-desc{font-size:.61rem;color:#8992a3;margin-top:.06rem;}
+.arrow{color:#b0b7c5;font-size:1rem;}
 
-.kpi {
-    background:#fff;
-    border:1px solid var(--line);
-    border-radius:17px;
-    padding:.95rem 1rem .8rem;
-    box-shadow:0 7px 22px rgba(25,35,65,.05);
-    min-height:118px;
+.kpi{
+ background:#fff;border:1px solid var(--line);
+ border-radius:16px;padding:.8rem .9rem;
+ box-shadow:0 6px 20px rgba(27,35,65,.045);
+ min-height:105px;
 }
-.kpi-top { display:flex; align-items:center; gap:.7rem; }
-.kpi-icon {
-    width:43px;height:43px;
-    border-radius:13px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:1.12rem;
+.kpi-top{display:flex;align-items:center;gap:.62rem;}
+.kpi-icon{
+ width:39px;height:39px;border-radius:11px;
+ display:flex;align-items:center;justify-content:center;
+ font-size:1rem;
 }
-.kpi-label {
-    color:#697589;
-    font-size:.66rem;
-    font-weight:800;
-    text-transform:uppercase;
-    letter-spacing:.045em;
-}
-.kpi-value {
-    color:var(--navy);
-    font-size:1.45rem;
-    font-weight:800;
-    margin-top:.15rem;
-}
-.kpi-note { color:#8490a3; font-size:.68rem; margin-top:.35rem; }
+.kpi-label{font-size:.61rem;color:#7a8495;font-weight:800;letter-spacing:.05em;}
+.kpi-value{font-size:1.3rem;font-weight:800;margin-top:.12rem;}
+.kpi-note{font-size:.63rem;color:#919aaa;margin-top:.3rem;}
 
-.card {
-    background:#fff;
-    border:1px solid var(--line);
-    border-radius:18px;
-    padding:1rem 1.1rem;
-    box-shadow:0 7px 22px rgba(25,35,65,.045);
-    margin-bottom:1rem;
+.card{
+ background:#fff;border:1px solid var(--line);
+ border-radius:16px;padding:.9rem 1rem;
+ box-shadow:0 6px 20px rgba(27,35,65,.04);
+ margin-bottom:.85rem;
 }
-.card-head {
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:1rem;
-    margin-bottom:.35rem;
+.card-head{
+ display:flex;align-items:center;justify-content:space-between;
+ gap:.6rem;margin-bottom:.3rem;
 }
-.card-title {
-    color:var(--navy);
-    font-size:.82rem;
-    font-weight:800;
-    text-transform:uppercase;
-    letter-spacing:.055em;
+.card-title{
+ color:var(--navy);font-size:.76rem;font-weight:800;
+ letter-spacing:.06em;text-transform:uppercase;
 }
-.card-sub {
-    color:#8a94a6;
-    font-size:.68rem;
+.card-sub{color:#98a0ae;font-size:.62rem;}
+
+.insight{
+ background:#f8f7ff;border:1px solid #e8e4fb;
+ border-left:3px solid var(--purple);
+ border-radius:10px;padding:.65rem .8rem;
+ color:#626d7e;font-size:.73rem;line-height:1.45;
+ margin:.35rem 0;
+}
+.insight b{color:var(--navy);}
+
+.perf-wrap{
+ background:#fff;border:1px solid var(--line);
+ border-radius:16px;padding:.35rem;
+ box-shadow:0 6px 20px rgba(27,35,65,.04);
+ margin-bottom:.9rem;
+}
+.perf-cell{
+ text-align:center;padding:.45rem .3rem;
+ border-right:1px solid #edf0f4;
+}
+.perf-cell:last-child{border-right:0;}
+.perf-label{font-size:.58rem;color:#7b8494;font-weight:800;letter-spacing:.04em;}
+.perf-value{font-size:1.18rem;font-weight:800;margin:.12rem 0;}
+.perf-note{font-size:.58rem;color:#98a0ae;}
+
+.driver{
+ background:#fff;border:1px solid var(--line);
+ border-radius:11px;padding:.55rem .65rem;margin:.3rem 0;
+}
+.driver-row{display:flex;justify-content:space-between;align-items:center;}
+.driver-name{font-size:.72rem;font-weight:700;color:#344054;}
+.driver-val{font-size:.7rem;font-weight:800;color:var(--purple);}
+.driver-track{height:5px;background:#eeeef5;border-radius:99px;margin-top:.4rem;overflow:hidden;}
+.driver-fill{height:100%;background:linear-gradient(90deg,#a79df0,#6657d9);border-radius:99px;}
+
+.prediction{
+ background:linear-gradient(135deg,#16834b,#21a461);
+ border-radius:15px;padding:1rem 1.15rem;color:#fff;
+ box-shadow:0 10px 24px rgba(22,131,75,.16);
+}
+.prediction-label{font-size:.62rem;font-weight:800;text-transform:uppercase;opacity:.82;}
+.prediction-value{font-size:1.55rem;font-weight:800;margin-top:.12rem;}
+
+.stButton>button,.stDownloadButton>button{
+ background:var(--purple);color:#fff;border:0;border-radius:9px;
+ font-weight:700;box-shadow:0 6px 15px rgba(102,87,217,.16);
+}
+.stButton>button:hover,.stDownloadButton>button:hover{background:#5647ca;color:#fff;}
+
+.stTabs [data-baseweb="tab-list"]{
+ background:#fff;border:1px solid var(--line);
+ border-radius:12px;padding:4px;gap:4px;
+}
+.stTabs [data-baseweb="tab"]{
+ border-radius:9px;color:#667085;font-weight:700;
+ font-size:.78rem;
+}
+.stTabs [aria-selected="true"]{
+ background:var(--purple)!important;color:#fff!important;
 }
 
-.insight {
-    background:linear-gradient(90deg,#f4f1ff,#faf9ff);
-    border:1px solid #e5e0ff;
-    border-left:4px solid var(--purple);
-    border-radius:13px;
-    padding:.85rem 1rem;
-    margin:.25rem 0 1rem;
-    color:#5f6b7d;
-    font-size:.81rem;
-    line-height:1.5;
+div[data-testid="stMetric"]{
+ background:#fff;border:1px solid var(--line);
+ border-radius:12px;
 }
-.insight b { color:var(--navy); }
+.stDataFrame{border-radius:10px;overflow:hidden;}
 
-.perf {
-    background:#fff;
-    border:1px solid var(--line);
-    border-radius:18px;
-    padding:.75rem .45rem;
-    box-shadow:0 7px 22px rgba(25,35,65,.045);
-}
-.perf-grid {
-    display:grid;
-    grid-template-columns:repeat(6,1fr);
-}
-.perf-cell {
-    text-align:center;
-    padding:.35rem .6rem;
-    border-right:1px solid #edf0f4;
-}
-.perf-cell:last-child { border-right:0; }
-.perf-label {
-    color:#718096;
-    font-size:.63rem;
-    font-weight:800;
-    text-transform:uppercase;
-}
-.perf-value {
-    font-size:1.28rem;
-    font-weight:800;
-    margin:.15rem 0;
-}
-.perf-note { color:#8a94a6; font-size:.63rem; }
-
-.driver {
-    background:#fff;
-    border:1px solid var(--line);
-    border-radius:14px;
-    padding:.75rem .85rem;
-    margin:.45rem 0;
-}
-.driver-row {
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:.7rem;
-}
-.driver-name { font-weight:700; color:#24304a; font-size:.8rem; }
-.driver-val { font-weight:800; color:var(--purple); font-size:.78rem; }
-.driver-track {
-    height:6px;
-    background:#eeeef5;
-    border-radius:99px;
-    margin-top:.5rem;
-    overflow:hidden;
-}
-.driver-fill {
-    height:100%;
-    background:linear-gradient(90deg,#a69bf7,#6957e8);
-    border-radius:99px;
-}
-
-.prediction {
-    background:linear-gradient(135deg,#168449,#23aa63);
-    border-radius:17px;
-    padding:1.15rem 1.35rem;
-    color:#fff;
-    box-shadow:0 12px 28px rgba(22,132,73,.18);
-}
-.prediction-label { font-size:.7rem; opacity:.84; font-weight:700; text-transform:uppercase; }
-.prediction-value { font-size:1.7rem; font-weight:800; margin-top:.15rem; }
-
-.stButton > button, .stDownloadButton > button {
-    background:var(--purple);
-    color:white;
-    border:0;
-    border-radius:10px;
-    font-weight:700;
-    box-shadow:0 7px 18px rgba(105,87,232,.18);
-}
-.stButton > button:hover, .stDownloadButton > button:hover {
-    background:#5948dc;
-    color:#fff;
-}
-
-.stTabs [data-baseweb="tab-list"] {
-    background:#fff;
-    border:1px solid var(--line);
-    border-radius:14px;
-    padding:5px;
-    gap:5px;
-}
-.stTabs [data-baseweb="tab"] {
-    border-radius:10px;
-    color:#667085;
-    font-weight:700;
-}
-.stTabs [aria-selected="true"] {
-    background:var(--purple) !important;
-    color:#fff !important;
-}
-
-div[data-testid="stMetric"] {
-    background:#fff;
-    border:1px solid var(--line);
-    border-radius:14px;
-    box-shadow:0 5px 18px rgba(25,35,65,.045);
-}
-
-.footer {
-    text-align:center;
-    color:#9aa3b2;
-    font-size:.7rem;
-    padding:1.2rem 0 .25rem;
+.footer{
+ text-align:center;color:#a0a7b4;font-size:.63rem;
+ padding:1rem 0 .2rem;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -494,19 +364,20 @@ st.markdown("""
 <div class="hero">
   <div class="hero-grid">
     <div>
+      <div class="hero-badge">● EXECUTIVE ANALYTICS · MODEL DEMO</div>
       <h1>Firm-Level Sales <span>Regression Explorer</span></h1>
-      <p>Executive analytics dashboard for understanding sales drivers,
-      validating a Linear OLS model and generating decision-ready predictions.</p>
+      <p>Understand sales drivers, assess model reliability and generate decision-ready
+      predictions through a single executive analytics view.</p>
     </div>
     <div class="hero-visual">
-      <div style="height:105px;display:flex;align-items:end;justify-content:center;">
-        <span class="bar" style="height:25px;"></span>
-        <span class="bar" style="height:40px;"></span>
-        <span class="bar" style="height:53px;"></span>
-        <span class="bar" style="height:69px;"></span>
-        <span class="bar" style="height:84px;"></span>
+      <div class="mini-bars">
+        <span class="mini-bar" style="height:25px"></span>
+        <span class="mini-bar" style="height:38px"></span>
+        <span class="mini-bar" style="height:48px"></span>
+        <span class="mini-bar" style="height:61px"></span>
+        <span class="mini-bar" style="height:74px"></span>
       </div>
-      <div class="growth">↗ SALES ANALYTICS</div>
+      <div class="hero-visual-label">SALES PERFORMANCE</div>
     </div>
   </div>
 </div>
@@ -616,7 +487,7 @@ with c_left:
     """, unsafe_allow_html=True)
 
     if target in num_cols:
-        fig, ax = plt.subplots(figsize=(8, 4.2))
+        fig, ax = plt.subplots(figsize=(8, 3.7))
         sns.histplot(
             df[target].dropna(),
             bins=25,
@@ -646,7 +517,7 @@ with c_right:
     """, unsafe_allow_html=True)
 
     if len(num_cols) > 1:
-        fig, ax = plt.subplots(figsize=(7.5, 4.2))
+        fig, ax = plt.subplots(figsize=(7.5, 3.7))
         corr = df[num_cols].corr()
         sns.heatmap(
             corr,
@@ -668,37 +539,41 @@ with c_right:
     st.markdown("</div>", unsafe_allow_html=True)
 
 # ============================================================
-# PERFORMANCE
-# ============================================================
-st.markdown("""
-<div class="perf">
-<div class="perf-grid">
-""", unsafe_allow_html=True)
-
+# PERFORMANCE — HORIZONTAL SCORECARD
 perf_data = [
-    ("R² (TRAIN)", f"{r2_train:.3f}", "Explained variance", "#5b4ee8"),
-    ("R² (TEST)", f"{r2_test:.3f}", "Generalization", "#2f6fed"),
+    ("R² TRAIN", f"{r2_train:.3f}", "Explained variance", "#5b4ee8"),
+    ("R² TEST", f"{r2_test:.3f}", "Generalization", "#2f6fed"),
     ("ADJUSTED R²", f"{adj_r2:.3f}", "Model complexity", "#20a05a"),
-    ("RMSE (TEST)", f"{rmse:.3f}", "Prediction error", "#e45567"),
-    ("MAE (TEST)", f"{mae:.3f}", "Absolute error", "#ef9b22"),
-    ("MODEL", "Linear", "OLS regression", "#6957e8"),
+    ("RMSE TEST", f"{rmse:.3f}", "Prediction error", "#d95768"),
+    ("MAE TEST", f"{mae:.3f}", "Absolute error", "#df941f"),
+    ("MODEL", "Linear", "OLS regression", "#6657d9"),
 ]
 
-for label, value, note, color in perf_data:
-    st.markdown(f"""
-    <div class="perf-cell">
-      <div class="perf-label">{label}</div>
-      <div class="perf-value" style="color:{color};">{value}</div>
-      <div class="perf-note">{note}</div>
-    </div>
-    """, unsafe_allow_html=True)
+perf_cols = st.columns(6, gap="small")
+for col, (label, value, note, color) in zip(perf_cols, perf_data):
+    with col:
+        st.markdown(f"""
+        <div class="perf-wrap">
+          <div class="perf-cell">
+            <div class="perf-label">{label}</div>
+            <div class="perf-value" style="color:{color};">{value}</div>
+            <div class="perf-note">{note}</div>
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
 
-st.markdown("</div></div>", unsafe_allow_html=True)
-
-# ============================================================
 # EXECUTIVE INSIGHTS + TOP DRIVERS
 # ============================================================
 st.write("")
+status_color = "#20a05a" if abs(r2_train-r2_test) < .10 else "#df941f"
+status_text = "STABLE GENERALIZATION" if abs(r2_train-r2_test) < .10 else "REVIEW MODEL GAP"
+st.markdown(
+    f'<div style="display:flex;justify-content:flex-end;margin:-.35rem 0 .45rem;">'
+    f'<span style="background:#fff;border:1px solid #e8ebf2;border-radius:999px;'
+    f'padding:.3rem .65rem;font-size:.62rem;font-weight:800;color:{status_color};">'
+    f'● {status_text}</span></div>',
+    unsafe_allow_html=True
+)
 i1, i2 = st.columns([1.2, .8])
 
 with i1:
