@@ -57,7 +57,7 @@ st.markdown("""
 }
 
 .subbrand {
-    color: #718096;
+    color: #42e3b3;
     font-size: 12px;
     margin-top: 3px;
 }
