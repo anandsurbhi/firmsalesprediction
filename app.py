@@ -28,7 +28,7 @@ plt.rcParams["axes.facecolor"] = "none"
 plt.rcParams["savefig.facecolor"] = "none"
 
 st.set_page_config(
-    page_title="Firm-Level Sales Regression Explorer",
+    page_title="Sales Intelligence | Regression Explorer",
     page_icon="📈",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -40,97 +40,187 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-        html, body, [class*="css"]  {
+        :root {
+            --primary: #6d5dfc;
+            --primary-2: #8b7cff;
+            --accent: #00c2a8;
+            --pink: #ff5ca8;
+            --text: #172033;
+            --muted: #667085;
+            --card: rgba(255,255,255,.92);
+            --border: rgba(108,99,255,.14);
+        }
+
+        html, body, [class*="css"] {
             font-family: 'Inter', sans-serif;
         }
 
-        .hero {
-            background: linear-gradient(120deg, #6C63FF 0%, #A084EE 45%, #FF6FD8 100%);
-            padding: 2.1rem 2rem;
-            border-radius: 18px;
-            margin-bottom: 1.6rem;
-            box-shadow: 0 10px 30px rgba(108, 99, 255, 0.35);
-        }
-        .hero h1 {
-            color: white;
-            font-weight: 800;
-            font-size: 2.1rem;
-            margin: 0;
-        }
-        .hero p {
-            color: rgba(255,255,255,0.9);
-            margin-top: .4rem;
-            font-size: 1.02rem;
+        .stApp {
+            background:
+                radial-gradient(circle at 5% 0%, rgba(109,93,252,.12), transparent 28%),
+                radial-gradient(circle at 95% 5%, rgba(255,92,168,.10), transparent 25%),
+                linear-gradient(180deg, #f8f9ff 0%, #f4f6fb 100%);
         }
 
-        .glass-card {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 16px;
-            padding: 1.3rem 1.4rem;
-            margin-bottom: 1rem;
-            box-shadow: 0 4px 18px rgba(0,0,0,0.18);
-        }
-
-        div[data-testid="stMetric"] {
-            background: rgba(108, 99, 255, 0.10);
-            border: 1px solid rgba(108, 99, 255, 0.25);
-            border-radius: 14px;
-            padding: 0.8rem 0.6rem 0.4rem 0.9rem;
-        }
-
-        div[data-testid="stMetricLabel"] {
-            font-weight: 600;
-            opacity: 0.85;
-        }
-
-        .stTabs [data-baseweb="tab-list"] {
-            gap: 6px;
-        }
-        .stTabs [data-baseweb="tab"] {
-            background-color: rgba(255,255,255,0.04);
-            border-radius: 10px 10px 0 0;
-            padding: 10px 18px;
-            font-weight: 600;
-        }
-        .stTabs [aria-selected="true"] {
-            background: linear-gradient(120deg, #6C63FF 0%, #A084EE 100%) !important;
-            color: white !important;
-        }
-
-        .stButton>button, .stDownloadButton>button {
-            background: linear-gradient(120deg, #6C63FF 0%, #A084EE 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            padding: 0.55rem 1.4rem;
-            font-weight: 700;
-            box-shadow: 0 4px 14px rgba(108, 99, 255, 0.4);
-        }
-        .stButton>button:hover, .stDownloadButton>button:hover {
-            filter: brightness(1.08);
-        }
-
-        .prediction-banner {
-            background: linear-gradient(120deg, #11998e 0%, #38ef7d 100%);
-            border-radius: 16px;
-            padding: 1.4rem 1.6rem;
-            color: #06281f;
-            font-weight: 700;
-            font-size: 1.4rem;
-            box-shadow: 0 10px 30px rgba(56, 239, 125, 0.30);
-            margin: 0.6rem 0 1.2rem 0;
+        [data-testid="stHeader"] {
+            background: transparent;
         }
 
         section[data-testid="stSidebar"] {
-            border-right: 1px solid rgba(255,255,255,0.06);
+            background: linear-gradient(180deg, #171a2b 0%, #222642 100%);
+            border-right: 0;
         }
 
-        div[data-baseweb="input"], div[data-baseweb="select"] {
+        section[data-testid="stSidebar"] * {
+            color: #f8f9ff !important;
+        }
+
+        section[data-testid="stSidebar"] [data-baseweb="select"] > div,
+        section[data-testid="stSidebar"] input {
+            background: rgba(255,255,255,.09) !important;
+            border: 1px solid rgba(255,255,255,.12) !important;
+        }
+
+        .hero {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #5146d8 0%, #7567f5 48%, #c653c9 100%);
+            padding: 2.5rem 2.4rem;
+            border-radius: 24px;
+            margin: .4rem 0 1.7rem;
+            box-shadow: 0 18px 45px rgba(81,70,216,.24);
+        }
+
+        .hero:after {
+            content: "";
+            position: absolute;
+            width: 240px;
+            height: 240px;
+            right: -70px;
+            top: -110px;
+            border-radius: 50%;
+            background: rgba(255,255,255,.13);
+        }
+
+        .hero h1 {
+            position: relative;
+            z-index: 1;
+            color: white;
+            font-weight: 800;
+            font-size: 2.25rem;
+            letter-spacing: -.04em;
+            margin: 0;
+        }
+
+        .hero p {
+            position: relative;
+            z-index: 1;
+            color: rgba(255,255,255,.88);
+            margin: .55rem 0 0;
+            font-size: 1rem;
+            max-width: 820px;
+        }
+
+        .section-title {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: var(--text);
+            margin: .6rem 0 1rem;
+        }
+
+        .glass-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 1.25rem 1.35rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 8px 28px rgba(31,41,55,.07);
+            backdrop-filter: blur(12px);
+        }
+
+        div[data-testid="stMetric"] {
+            background: rgba(255,255,255,.92);
+            border: 1px solid rgba(108,99,255,.13);
+            border-radius: 18px;
+            padding: 1rem 1rem .75rem;
+            box-shadow: 0 7px 22px rgba(31,41,55,.06);
+        }
+
+        div[data-testid="stMetricLabel"] {
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        div[data-testid="stMetricValue"] {
+            color: var(--text);
+            font-weight: 800;
+        }
+
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 8px;
+            background: rgba(255,255,255,.7);
+            padding: 6px;
+            border-radius: 14px;
+            border: 1px solid rgba(108,99,255,.10);
+        }
+
+        .stTabs [data-baseweb="tab"] {
+            border-radius: 10px;
+            padding: 9px 17px;
+            font-weight: 700;
+            color: #667085;
+        }
+
+        .stTabs [aria-selected="true"] {
+            background: linear-gradient(135deg, #6d5dfc, #8b7cff) !important;
+            color: white !important;
+        }
+
+        .stButton > button, .stDownloadButton > button {
+            border: 0;
+            border-radius: 11px;
+            padding: .62rem 1.35rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #6d5dfc, #8b7cff);
+            color: white;
+            box-shadow: 0 8px 20px rgba(109,93,252,.24);
+        }
+
+        .stButton > button:hover, .stDownloadButton > button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 11px 25px rgba(109,93,252,.32);
+        }
+
+        .prediction-banner {
+            background: linear-gradient(135deg, #00a98f 0%, #00c2a8 52%, #42d6b8 100%);
+            border-radius: 18px;
+            padding: 1.45rem 1.6rem;
+            color: white;
+            font-weight: 800;
+            font-size: 1.45rem;
+            box-shadow: 0 14px 32px rgba(0,194,168,.22);
+            margin: .7rem 0 1.2rem;
+        }
+
+        .stAlert {
+            border-radius: 14px;
+        }
+
+        div[data-baseweb="input"],
+        div[data-baseweb="select"] {
             border-radius: 10px !important;
         }
+
+        .stDataFrame {
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        /* Hide Streamlit's default footer/menu for a cleaner demo look */
+        #MainMenu { visibility: hidden; }
+        footer { visibility: hidden; }
     </style>
     """,
     unsafe_allow_html=True,
@@ -286,6 +376,18 @@ st.markdown(
     '<div class="hero"><h1>📈 Firm-Level Sales Regression Explorer</h1>'
     '<p>Explore your data, fit an OLS model, check diagnostics, and predict '
     'sales for any custom combination of inputs — all in one place.</p></div>',
+    unsafe_allow_html=True,
+)
+
+# Compact workflow indicator for presentation/demo use
+st.markdown(
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;margin:-.4rem 0 1.2rem;">'
+    '<span style="background:#eeeaff;color:#5146d8;padding:7px 12px;border-radius:999px;font-weight:700;">01 · Explore</span>'
+    '<span style="background:#e8fbf7;color:#008f7b;padding:7px 12px;border-radius:999px;font-weight:700;">02 · Prepare</span>'
+    '<span style="background:#fff0f7;color:#c53f7f;padding:7px 12px;border-radius:999px;font-weight:700;">03 · Model</span>'
+    '<span style="background:#eef4ff;color:#3563c7;padding:7px 12px;border-radius:999px;font-weight:700;">04 · Validate</span>'
+    '<span style="background:#ecfbf4;color:#16794c;padding:7px 12px;border-radius:999px;font-weight:700;">05 · Predict</span>'
+    '</div>',
     unsafe_allow_html=True,
 )
 
