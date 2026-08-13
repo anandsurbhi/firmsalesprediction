@@ -1,600 +1,830 @@
-"""
-Firm Performance Analytics Dashboard
-=====================================
-A professional Streamlit dashboard for exploring firm-level financial data,
-visualizing key relationships, and comparing regression models
-(OLS Linear Regression, Random Forest, XGBoost) that predict firm `sales`.
-
-Run with:
-    streamlit run app.py
-"""
-
-import warnings
-warnings.filterwarnings("ignore")
-
-import numpy as np
-import pandas as pd
 import streamlit as st
+import pandas as pd
+import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 import statsmodels.api as sm
-from statsmodels.stats.outliers_influence import variance_inflation_factor
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+from scipy import stats
 
-# --------------------------------------------------------------------------------------
+# ============================================================
 # PAGE CONFIG
-# --------------------------------------------------------------------------------------
+# ============================================================
 st.set_page_config(
-    page_title="Firm Performance Analytics",
-    page_icon="📊",
+    page_title="Firm Sales Analytics",
+    page_icon=None,
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
-# --------------------------------------------------------------------------------------
-# THEME / COLOR SYSTEM
-# --------------------------------------------------------------------------------------
-PRIMARY = "#4F46E5"      # Indigo
-PRIMARY_DARK = "#3730A3"
-ACCENT = "#06B6D4"       # Cyan
-SUCCESS = "#10B981"      # Emerald
-WARNING = "#F59E0B"      # Amber
-DANGER = "#EF4444"       # Red
-BG_CARD = "#111827"
-BG_CARD_LIGHT = "#1F2937"
-TEXT_MUTED = "#9CA3AF"
-PALETTE = [PRIMARY, ACCENT, SUCCESS, WARNING, DANGER, "#A855F7", "#EC4899", "#14B8A6"]
-MODEL_COLORS = {"OLS Linear Regression": PRIMARY}
+# ============================================================
+# LIGHT PROFESSIONAL THEME — NO ICONS
+# ============================================================
+st.markdown("""
+<style>
+    .stApp {
+        background: #F6F8FB;
+        color: #172033;
+    }
 
-st.markdown(
-    f"""
-    <style>
-    .stApp {{
-        background: radial-gradient(circle at 10% 0%, #111827 0%, #0B0F19 55%, #0B0F19 100%);
-    }}
-    section[data-testid="stSidebar"] {{
-        background: #0B0F19;
-        border-right: 1px solid #1F2937;
-    }}
-    h1, h2, h3, h4 {{
-        color: #F9FAFB !important;
-        font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
-    }}
-    p, li, span, label {{
-        color: #E5E7EB;
-    }}
-    .kpi-card {{
-        background: linear-gradient(145deg, {BG_CARD} 0%, {BG_CARD_LIGHT} 100%);
-        border: 1px solid #273349;
+    .block-container {
+        padding: 1.2rem 2.2rem 2rem 2.2rem;
+        max-width: 1500px;
+    }
+
+    /* Top navigation */
+    .topbar {
+        background: #FFFFFF;
+        border: 1px solid #E3E8EF;
         border-radius: 14px;
-        padding: 18px 20px;
-        box-shadow: 0 4px 14px rgba(0,0,0,0.35);
-    }}
-    .kpi-label {{
-        color: {TEXT_MUTED};
-        font-size: 0.78rem;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        font-weight: 600;
-        margin-bottom: 6px;
-    }}
-    .kpi-value {{
-        font-size: 1.65rem;
-        font-weight: 700;
-        color: #F9FAFB;
-    }}
-    .kpi-sub {{
-        font-size: 0.78rem;
-        margin-top: 4px;
-        font-weight: 600;
-    }}
-    .section-banner {{
-        background: linear-gradient(90deg, {PRIMARY} 0%, {ACCENT} 100%);
-        padding: 14px 22px;
+        padding: 12px 18px;
+        margin-bottom: 18px;
+        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+    }
+
+    .brand {
+        font-size: 20px;
+        font-weight: 750;
+        color: #173B6C;
+        letter-spacing: -0.3px;
+    }
+
+    .subbrand {
+        color: #6B7280;
+        font-size: 12px;
+        margin-top: 2px;
+    }
+
+    /* KPI cards */
+    .kpi-card {
+        background: #FFFFFF;
+        border: 1px solid #E3E8EF;
         border-radius: 12px;
-        color: white;
-        font-size: 1.15rem;
+        padding: 18px 20px;
+        min-height: 112px;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.035);
+    }
+
+    .kpi-label {
+        color: #667085;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .7px;
+    }
+
+    .kpi-value {
+        color: #173B6C;
+        font-size: 28px;
+        font-weight: 750;
+        margin-top: 7px;
+    }
+
+    .kpi-caption {
+        color: #8A94A6;
+        font-size: 11px;
+        margin-top: 4px;
+    }
+
+    /* Section cards */
+    .section-card {
+        background: #FFFFFF;
+        border: 1px solid #E3E8EF;
+        border-radius: 14px;
+        padding: 20px;
+        margin-bottom: 18px;
+        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.035);
+    }
+
+    .section-title {
+        color: #173B6C;
+        font-size: 17px;
+        font-weight: 720;
+        margin-bottom: 3px;
+    }
+
+    .section-subtitle {
+        color: #667085;
+        font-size: 12px;
+        margin-bottom: 14px;
+    }
+
+    /* Bookmark bar */
+    .bookmark-label {
+        color: #667085;
+        font-size: 11px;
         font-weight: 700;
-        margin: 18px 0 14px 0;
-    }}
-    .pill {{
-        display:inline-block; padding:3px 12px; border-radius:999px;
-        font-size:0.72rem; font-weight:700; letter-spacing:.03em;
-    }}
-    div[data-testid="stMetricValue"] {{ color: #F9FAFB; }}
-    thead tr th {{ background-color: {BG_CARD_LIGHT} !important; color: #F9FAFB !important; }}
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+        text-transform: uppercase;
+        letter-spacing: .8px;
+        margin: 3px 0 8px 2px;
+    }
 
+    /* Buttons */
+    .stButton > button {
+        border: 1px solid #D8DEE8;
+        background: #FFFFFF;
+        color: #344054;
+        border-radius: 8px;
+        font-weight: 600;
+        min-height: 38px;
+    }
 
-def kpi_card(label, value, sub=None, sub_color=SUCCESS):
-    sub_html = f'<div class="kpi-sub" style="color:{sub_color}">{sub}</div>' if sub else ""
+    .stButton > button:hover {
+        border-color: #2F6BBA;
+        color: #173B6C;
+        background: #F4F8FD;
+    }
+
+    /* Tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 5px;
+        background: #FFFFFF;
+        border: 1px solid #E3E8EF;
+        border-radius: 12px;
+        padding: 5px;
+        margin-bottom: 18px;
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        height: 38px;
+        border-radius: 8px;
+        color: #667085;
+        font-weight: 600;
+        padding: 0 17px;
+    }
+
+    .stTabs [aria-selected="true"] {
+        background: #EAF2FC;
+        color: #173B6C !important;
+    }
+
+    /* Metric */
+    [data-testid="stMetric"] {
+        background: #FFFFFF;
+        border: 1px solid #E3E8EF;
+        border-radius: 12px;
+        padding: 12px 16px;
+    }
+
+    [data-testid="stMetricLabel"] {
+        color: #667085 !important;
+    }
+
+    [data-testid="stMetricValue"] {
+        color: #173B6C !important;
+    }
+
+    /* Alerts */
+    .insight {
+        background: #F2F7FC;
+        border-left: 4px solid #2F6BBA;
+        border-radius: 7px;
+        padding: 12px 15px;
+        color: #344054;
+        font-size: 13px;
+        line-height: 1.55;
+        margin: 10px 0;
+    }
+
+    .footer {
+        color: #98A2B3;
+        font-size: 11px;
+        text-align: center;
+        padding: 18px 0 4px 0;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# ============================================================
+# HELPERS
+# ============================================================
+TARGET = "sales"
+
+def clean_dataframe(df):
+    df = df.copy()
+    if TARGET not in df.columns:
+        return df, "Target column 'sales' was not found."
+
+    # Match the original notebook: remove rows with missing target.
+    before = len(df)
+    df = df.dropna(subset=[TARGET]).copy()
+    removed = before - len(df)
+
+    return df, f"{removed:,} rows removed because sales was missing."
+
+def prepare_features(df):
+    """Create a model matrix consistent with the notebook."""
+    X = df.drop(columns=[TARGET], errors="ignore").copy()
+
+    # Original notebook uses dummy variables for categorical columns.
+    X = pd.get_dummies(X, drop_first=True)
+
+    # Convert boolean columns generated by get_dummies to numeric.
+    X = X.astype(float)
+
+    # Statsmodels intercept.
+    X = sm.add_constant(X, has_constant="add")
+    return X
+
+def safe_mape(y_true, y_pred):
+    y_true = np.asarray(y_true, dtype=float)
+    y_pred = np.asarray(y_pred, dtype=float)
+    mask = y_true != 0
+    if mask.sum() == 0:
+        return np.nan
+    return np.mean(np.abs((y_true[mask] - y_pred[mask]) / y_true[mask])) * 100
+
+def performance(model, X, y):
+    pred = model.predict(X)
+    return {
+        "R²": r2_score(y, pred),
+        "RMSE": np.sqrt(mean_squared_error(y, pred)),
+        "MAE": mean_absolute_error(y, pred),
+        "MAPE": safe_mape(y, pred),
+    }
+
+def fmt_num(x):
+    if pd.isna(x):
+        return "—"
+    return f"{x:,.2f}"
+
+def make_model(df, test_size=0.20, random_state=1):
+    X = prepare_features(df)
+    y = df[TARGET].astype(float)
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=test_size, random_state=random_state
+    )
+
+    model = sm.OLS(y_train, X_train).fit()
+    return model, X_train, X_test, y_train, y_test
+
+def kpi(label, value, caption=""):
     st.markdown(
         f"""
         <div class="kpi-card">
             <div class="kpi-label">{label}</div>
             <div class="kpi-value">{value}</div>
-            {sub_html}
+            <div class="kpi-caption">{caption}</div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
+# ============================================================
+# SESSION STATE
+# ============================================================
+if "page" not in st.session_state:
+    st.session_state.page = "KPI"
 
-def section_banner(text):
-    st.markdown(f'<div class="section-banner">{text}</div>', unsafe_allow_html=True)
+if "data" not in st.session_state:
+    st.session_state.data = None
 
+if "model" not in st.session_state:
+    st.session_state.model = None
 
-PLOTLY_LAYOUT = dict(
-    paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(0,0,0,0)",
-    font=dict(color="#E5E7EB"),
-    legend=dict(bgcolor="rgba(0,0,0,0)"),
-    margin=dict(l=10, r=10, t=50, b=10),
-)
+if "model_data" not in st.session_state:
+    st.session_state.model_data = None
 
+# ============================================================
+# TOP HEADER
+# ============================================================
+st.markdown("""
+<div class="topbar">
+    <div class="brand">Firm Sales Analytics</div>
+    <div class="subbrand">Linear Regression | Business Intelligence | Model Diagnostics</div>
+</div>
+""", unsafe_allow_html=True)
 
-def style_fig(fig):
-    fig.update_layout(**PLOTLY_LAYOUT)
-    fig.update_xaxes(gridcolor="#1F2937", zerolinecolor="#1F2937")
-    fig.update_yaxes(gridcolor="#1F2937", zerolinecolor="#1F2937")
-    return fig
+# ============================================================
+# DATA LOADING
+# ============================================================
+with st.sidebar:
+    st.header("Data")
+    uploaded = st.file_uploader("Upload firm-level CSV", type=["csv"])
+    st.caption("Expected target column: sales")
 
+if uploaded is not None:
+    raw = pd.read_csv(uploaded)
+    st.session_state.data, _ = clean_dataframe(raw)
 
-# --------------------------------------------------------------------------------------
-# SIDEBAR - DATA SOURCE
-# --------------------------------------------------------------------------------------
-st.sidebar.markdown("## 📊 Firm Analytics")
-st.sidebar.caption("Upload your firm-level dataset to begin, or use the bundled sample data.")
+elif st.session_state.data is None:
+    # Optional local fallback for the original notebook environment.
+    default_paths = [
+        "Firm_level_data (1).csv",
+        "/content/Firm_level_data (1).csv",
+    ]
+    for path in default_paths:
+        try:
+            raw = pd.read_csv(path)
+            st.session_state.data, _ = clean_dataframe(raw)
+            break
+        except Exception:
+            pass
 
-uploaded_file = st.sidebar.file_uploader("Upload CSV", type=["csv"])
+if st.session_state.data is None:
+    st.warning("Upload the firm-level CSV to start the dashboard.")
+    st.stop()
 
+df = st.session_state.data
 
-@st.cache_data(show_spinner=False)
-def load_sample_data(n=400, seed=1):
-    """Synthetic fallback dataset mirroring the original firm-level schema
-    (used only if no file is uploaded and no sample file is found on disk)."""
-    rng = np.random.default_rng(seed)
-    capital = rng.gamma(4, 300, n)
-    employment = rng.gamma(3, 150, n)
-    randd = rng.gamma(2, 40, n) * (rng.random(n) > 0.2)
-    patents = (randd * rng.uniform(0.3, 1.2, n) + rng.normal(0, 5, n)).clip(min=0)
-    institutions = rng.uniform(5, 95, n)
-    tobinq = rng.gamma(3, 0.7, n) + 0.5
-    value = capital * rng.uniform(1.5, 4, n) + randd * 5
-    sp500 = rng.choice(["yes", "no"], size=n, p=[0.35, 0.65])
-    noise = rng.normal(0, 150, n)
-    sales = (
-        2.1 * capital
-        + 1.4 * employment
-        + 3.0 * randd
-        + 0.8 * patents
-        + 40 * tobinq
-        + (sp500 == "yes") * 500
-        + noise
-        + 300
-    ).clip(min=10)
-    return pd.DataFrame(
-        {
-            "sales": sales,
-            "capital": capital,
-            "patents": patents,
-            "randd": randd,
-            "employment": employment,
-            "tobinq": tobinq,
-            "value": value,
-            "institutions": institutions,
-            "sp500": sp500,
-        }
+# ============================================================
+# BOOKMARK NAVIGATION
+# ============================================================
+st.markdown('<div class="bookmark-label">Bookmarks</div>', unsafe_allow_html=True)
+
+bookmark_cols = st.columns(7)
+bookmarks = [
+    "KPI",
+    "Data preprocessing",
+    "EDA",
+    "Model building",
+    "Model summary",
+    "Predict",
+    "About",
+]
+
+for col, name in zip(bookmark_cols, bookmarks):
+    with col:
+        if st.button(name, use_container_width=True, key=f"bookmark_{name}"):
+            st.session_state.page = name
+
+page = st.session_state.page
+
+st.markdown("---")
+
+# ============================================================
+# KPI
+# ============================================================
+if page == "KPI":
+    st.markdown(
+        '<div class="section-card"><div class="section-title">Executive KPI Overview</div>'
+        '<div class="section-subtitle">High-level view of the firm-level sales dataset and model readiness.</div></div>',
+        unsafe_allow_html=True,
     )
 
+    cols = st.columns(5)
+    with cols[0]:
+        kpi("Firms", f"{len(df):,}", "records after target cleaning")
+    with cols[1]:
+        kpi("Features", f"{df.shape[1]-1:,}", "predictor variables")
+    with cols[2]:
+        kpi("Avg. Sales", fmt_num(df[TARGET].mean()), "mean firm sales")
+    with cols[3]:
+        kpi("Median Sales", fmt_num(df[TARGET].median()), "median firm sales")
+    with cols[4]:
+        kpi("Missing Cells", f"{int(df.isna().sum().sum()):,}", "remaining missing values")
 
-@st.cache_data(show_spinner=False)
-def load_uploaded(file_bytes):
-    import io
-    return pd.read_csv(io.BytesIO(file_bytes))
+    st.markdown("<br>", unsafe_allow_html=True)
 
+    c1, c2 = st.columns(2)
 
-if uploaded_file is not None:
-    df_raw = load_uploaded(uploaded_file.getvalue())
-    data_source_label = f"Uploaded: {uploaded_file.name}"
-else:
-    df_raw = load_sample_data()
-    data_source_label = "Sample synthetic firm data (upload your own CSV in the sidebar)"
+    with c1:
+        st.markdown('<div class="section-card"><div class="section-title">Sales Distribution</div>'
+                    '<div class="section-subtitle">Distribution of the dependent variable.</div></div>',
+                    unsafe_allow_html=True)
+        fig = px.histogram(df, x=TARGET, nbins=30, marginal="box")
+        fig.update_layout(
+            template="simple_white",
+            height=390,
+            margin=dict(l=20, r=20, t=20, b=20),
+            font=dict(color="#344054"),
+        )
+        st.plotly_chart(fig, use_container_width=True)
 
-st.sidebar.info(data_source_label)
+    with c2:
+        numeric = df.select_dtypes(include=np.number)
+        if TARGET in numeric.columns and numeric.shape[1] > 1:
+            corr = numeric.corr(numeric_only=True)[TARGET].drop(TARGET).sort_values()
+            fig = px.bar(
+                x=corr.values,
+                y=corr.index,
+                orientation="h",
+                labels={"x": "Correlation with sales", "y": ""},
+            )
+            fig.update_layout(
+                template="simple_white",
+                height=390,
+                margin=dict(l=20, r=20, t=20, b=20),
+                font=dict(color="#344054"),
+            )
+            st.markdown('<div class="section-card"><div class="section-title">Sales Correlation</div>'
+                        '<div class="section-subtitle">Linear relationship between numeric predictors and sales.</div></div>',
+                        unsafe_allow_html=True)
+            st.plotly_chart(fig, use_container_width=True)
 
-# Basic cleaning: drop fully-empty rows/cols, de-duplicate column names
-df = df_raw.copy()
-df = df.dropna(axis=1, how="all")
-if df.columns.duplicated().any():
-    dup_cols = df.columns[df.columns.duplicated()].unique().tolist()
-    st.sidebar.warning(f"Duplicate column names found and de-duplicated: {dup_cols}")
-    df = df.loc[:, ~df.columns.duplicated()]
-
-numeric_cols_all = df.select_dtypes(include=np.number).columns.tolist()
-categorical_cols_all = [c for c in df.columns if c not in numeric_cols_all]
-
-st.sidebar.markdown("---")
-st.sidebar.markdown("### ⚙️ Model Configuration")
-
-default_target = "sales" if "sales" in numeric_cols_all else (numeric_cols_all[0] if numeric_cols_all else None)
-target_col = st.sidebar.selectbox(
-    "Target variable (to predict)",
-    options=numeric_cols_all,
-    index=numeric_cols_all.index(default_target) if default_target in numeric_cols_all else 0,
-)
-
-drop_na_target = st.sidebar.checkbox(f"Drop rows with missing '{target_col}'", value=True)
-test_size = st.sidebar.slider("Test set size", 0.1, 0.4, 0.2, 0.05)
-
-st.sidebar.markdown("---")
-st.sidebar.caption("Built with Streamlit · statsmodels · scikit-learn · XGBoost")
-
-if drop_na_target:
-    df = df.dropna(subset=[target_col])
-
-# --------------------------------------------------------------------------------------
-# HEADER
-# --------------------------------------------------------------------------------------
-st.markdown(
-    f"""
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 6px;">
-        <div>
-            <h1 style="margin-bottom:0;">📊 Firm Performance Analytics Dashboard</h1>
-            <p style="color:{TEXT_MUTED}; margin-top:2px;">
-                Exploratory analysis and predictive modeling of firm-level financial &amp; operational data.
-            </p>
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
-tab_kpi, tab_viz, tab_model, tab_predict, tab_data = st.tabs(
-    ["🏠 Overview & KPIs", "📈 Visualizations", "🧠 Model Summary", "🔮 Predict", "🗂️ Raw Data"]
-)
-
-# ========================================================================================
-# TAB 1: OVERVIEW & KPIs
-# ========================================================================================
-with tab_kpi:
-    section_banner("Key Performance Indicators")
-
-    n_rows, n_cols = df.shape
-    missing_pct = df.isnull().mean().mean() * 100
-    dup_count = df.duplicated().sum()
+# ============================================================
+# DATA PREPROCESSING
+# ============================================================
+elif page == "Data preprocessing":
+    st.markdown(
+        '<div class="section-card"><div class="section-title">Data Preprocessing</div>'
+        '<div class="section-subtitle">Dataset quality, structure, missing values, duplicates and descriptive statistics.</div></div>',
+        unsafe_allow_html=True,
+    )
 
     c1, c2, c3, c4 = st.columns(4)
-    with c1:
-        kpi_card("Total Records", f"{n_rows:,}", f"{n_cols} columns", TEXT_MUTED)
-    with c2:
-        kpi_card("Avg " + target_col.title(), f"{df[target_col].mean():,.1f}",
-                  f"Median {df[target_col].median():,.1f}", ACCENT)
-    with c3:
-        kpi_card("Missing Data", f"{missing_pct:.1f}%",
-                  "Clean" if missing_pct < 1 else "Needs attention",
-                  SUCCESS if missing_pct < 1 else WARNING)
-    with c4:
-        kpi_card("Duplicate Rows", f"{dup_count:,}",
-                  "None found" if dup_count == 0 else "Review recommended",
-                  SUCCESS if dup_count == 0 else DANGER)
+    c1.metric("Rows", f"{df.shape[0]:,}")
+    c2.metric("Columns", f"{df.shape[1]:,}")
+    c3.metric("Duplicates", f"{int(df.duplicated().sum()):,}")
+    c4.metric("Missing Cells", f"{int(df.isna().sum().sum()):,}")
 
-    st.write("")
-    c5, c6, c7, c8 = st.columns(4)
-    other_num = [c for c in numeric_cols_all if c != target_col][:3]
-    for col, container in zip(other_num, [c5, c6, c7]):
-        with container:
-            kpi_card(col.title(), f"{df[col].mean():,.2f}", f"Std {df[col].std():,.2f}", PRIMARY)
-    if categorical_cols_all:
-        cat = categorical_cols_all[0]
-        with c8:
-            top_val = df[cat].value_counts(normalize=True).idxmax()
-            top_pct = df[cat].value_counts(normalize=True).max() * 100
-            kpi_card(f"Top '{cat}'", str(top_val), f"{top_pct:.1f}% of records", ACCENT)
+    st.subheader("Data Preview")
+    st.dataframe(df.head(10), use_container_width=True)
 
-    st.write("")
-    section_banner("Correlation with Target")
-    corr_target = df[numeric_cols_all].corr()[target_col].drop(target_col).sort_values(key=abs, ascending=False)
-    fig = px.bar(
-        corr_target,
-        orientation="h",
-        color=corr_target.values,
-        color_continuous_scale=["#EF4444", "#374151", "#10B981"],
-        labels={"value": "Correlation", "index": "Feature"},
-        title=f"Feature correlation with {target_col}",
+    st.subheader("Missing Values")
+    missing = df.isna().sum().sort_values(ascending=False)
+    missing_df = pd.DataFrame({"Column": missing.index, "Missing Values": missing.values})
+    st.dataframe(missing_df, use_container_width=True, hide_index=True)
+
+    st.subheader("Descriptive Statistics")
+    st.dataframe(df.describe(include="all").T, use_container_width=True)
+
+    st.markdown(
+        '<div class="insight"><b>Preprocessing applied:</b> rows with missing sales are removed, '
+        'categorical predictors are converted to dummy variables, and the regression matrix receives an intercept.</div>',
+        unsafe_allow_html=True,
     )
-    fig.update_coloraxes(showscale=False)
-    st.plotly_chart(style_fig(fig), use_container_width=True)
 
-# ========================================================================================
-# TAB 2: VISUALIZATIONS
-# ========================================================================================
-with tab_viz:
-    section_banner("Distribution Explorer")
-    col_a, col_b = st.columns([1, 3])
-    with col_a:
-        dist_col = st.selectbox("Select variable", numeric_cols_all, index=numeric_cols_all.index(target_col))
-        show_kde = st.checkbox("Show density curve", value=True)
-    with col_b:
-        fig = px.histogram(
-            df, x=dist_col, nbins=40, marginal="box",
-            color_discrete_sequence=[PRIMARY],
-            title=f"Distribution of {dist_col}",
-        )
-        fig.add_vline(x=df[dist_col].mean(), line_dash="dash", line_color=ACCENT,
-                       annotation_text="mean", annotation_font_color=ACCENT)
-        fig.add_vline(x=df[dist_col].median(), line_dash="dot", line_color=WARNING,
-                       annotation_text="median", annotation_font_color=WARNING)
-        st.plotly_chart(style_fig(fig), use_container_width=True)
+# ============================================================
+# EDA
+# ============================================================
+elif page == "EDA":
+    st.markdown(
+        '<div class="section-card"><div class="section-title">Exploratory Data Analysis</div>'
+        '<div class="section-subtitle">Understand distributions, relationships, outliers and correlations.</div></div>',
+        unsafe_allow_html=True,
+    )
 
-    st.write("")
-    col1, col2 = st.columns(2)
-    with col1:
-        section_banner("Correlation Heatmap")
-        corr = df[numeric_cols_all].corr()
-        fig = px.imshow(
-            corr, text_auto=".2f", aspect="auto",
-            color_continuous_scale="RdBu", zmin=-1, zmax=1,
-        )
-        st.plotly_chart(style_fig(fig), use_container_width=True)
+    numeric_cols = df.select_dtypes(include=np.number).columns.tolist()
 
-    with col2:
-        section_banner("Category Breakdown")
-        if categorical_cols_all:
-            cat_col = st.selectbox("Categorical variable", categorical_cols_all)
-            vc = df[cat_col].value_counts().reset_index()
-            vc.columns = [cat_col, "count"]
-            fig = px.bar(vc, x=cat_col, y="count", color=cat_col,
-                         color_discrete_sequence=PALETTE, title=f"{target_col} volume by {cat_col}")
-            st.plotly_chart(style_fig(fig), use_container_width=True)
-        else:
-            st.info("No categorical columns detected in this dataset.")
-
-    st.write("")
-    section_banner("Relationship Explorer (Scatter)")
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        x_var = st.selectbox("X-axis", numeric_cols_all, index=0)
-    with col2:
-        y_var = st.selectbox("Y-axis", numeric_cols_all,
-                              index=numeric_cols_all.index(target_col) if target_col in numeric_cols_all else 0)
-    with col3:
-        color_var = st.selectbox("Color by", ["None"] + categorical_cols_all)
-
-    if x_var == y_var:
-        st.warning("Please select two **different** variables for the X and Y axes.")
+    if not numeric_cols:
+        st.info("No numeric columns available for EDA.")
     else:
-        scatter_cols = [x_var, y_var] + ([color_var] if color_var != "None" else [])
-        scatter_df = df.loc[:, ~df.columns.duplicated()][scatter_cols].copy()
-        fig = px.scatter(
-            scatter_df, x=x_var, y=y_var,
-            color=None if color_var == "None" else color_var,
-            trendline="ols",
-            color_discrete_sequence=PALETTE,
-            opacity=0.75,
-            title=f"{y_var} vs {x_var}",
-        )
-        st.plotly_chart(style_fig(fig), use_container_width=True)
+        selected = st.selectbox("Select a numeric variable", numeric_cols)
 
-    if categorical_cols_all:
-        st.write("")
-        section_banner("Boxplot by Category")
-        cbox = st.selectbox("Category for boxplot", categorical_cols_all, key="box_cat")
-        nbox = st.selectbox("Numeric variable", numeric_cols_all, key="box_num",
-                             index=numeric_cols_all.index(target_col) if target_col in numeric_cols_all else 0)
-        fig = px.box(df, x=cbox, y=nbox, color=cbox, color_discrete_sequence=PALETTE)
-        st.plotly_chart(style_fig(fig), use_container_width=True)
+        c1, c2 = st.columns(2)
 
-# ========================================================================================
-# SHARED: DATA PREP FOR MODELING
-# ========================================================================================
-@st.cache_data(show_spinner=False)
-def prepare_model_data(df, target_col, test_size):
-    X = df.drop(columns=[target_col])
-    y = df[target_col]
+        with c1:
+            fig = px.histogram(df, x=selected, nbins=30, marginal="box")
+            fig.update_layout(template="simple_white", height=430)
+            st.plotly_chart(fig, use_container_width=True)
 
-    X = pd.get_dummies(X, drop_first=True)
-    X = X.select_dtypes(include=np.number)
-    X = X.fillna(X.mean(numeric_only=True))
-    y = y.astype(float)
+        with c2:
+            if selected != TARGET:
+                fig = px.scatter(
+                    df,
+                    x=selected,
+                    y=TARGET,
+                    trendline="ols",
+                    opacity=0.65,
+                    labels={selected: selected, TARGET: "Sales"},
+                )
+                fig.update_layout(template="simple_white", height=430)
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("Select a predictor to view its relationship with sales.")
 
-    X_sm = sm.add_constant(X, has_constant="add")
+    st.subheader("Correlation Matrix")
 
-    x_train, x_test, y_train, y_test = train_test_split(
-        X_sm, y, test_size=test_size, random_state=1
+    corr = df.select_dtypes(include=np.number).corr()
+    fig = px.imshow(
+        corr,
+        text_auto=".2f",
+        aspect="auto",
+        color_continuous_scale="RdBu_r",
+        zmin=-1,
+        zmax=1,
     )
-    return X_sm, x_train, x_test, y_train, y_test
+    fig.update_layout(template="simple_white", height=600)
+    st.plotly_chart(fig, use_container_width=True)
 
+    st.subheader("Outlier Overview")
+    outlier_rows = []
+    for col in numeric_cols:
+        s = df[col].dropna()
+        if len(s) == 0:
+            continue
+        q1, q3 = s.quantile([0.25, 0.75])
+        iqr = q3 - q1
+        lower, upper = q1 - 1.5 * iqr, q3 + 1.5 * iqr
+        count = ((s < lower) | (s > upper)).sum()
+        outlier_rows.append({
+            "Variable": col,
+            "Outliers": int(count),
+            "Outlier %": round(count / len(s) * 100, 2),
+        })
 
-def mape_score(targets, predictions):
-    targets = np.array(targets)
-    predictions = np.array(predictions)
-    mask = targets != 0
-    return np.mean(np.abs((targets[mask] - predictions[mask]) / targets[mask])) * 100
-
-
-def perf_metrics(y_true, y_pred):
-    rmse = np.sqrt(mean_squared_error(y_true, y_pred))
-    mae = mean_absolute_error(y_true, y_pred)
-    mape = mape_score(y_true, y_pred)
-    r2 = r2_score(y_true, y_pred)
-    return dict(RMSE=rmse, MAE=mae, MAPE=mape, R2=r2)
-
-
-@st.cache_resource(show_spinner=True)
-def train_models(x_train, x_test, y_train, y_test):
-    results = {}
-
-    # ---- OLS Linear Regression ----
-    ols = sm.OLS(y_train, x_train).fit()
-    results["OLS Linear Regression"] = {
-        "model": ols,
-        "train_pred": ols.predict(x_train),
-        "test_pred": ols.predict(x_test),
-        "train_perf": perf_metrics(y_train, ols.predict(x_train)),
-        "test_perf": perf_metrics(y_test, ols.predict(x_test)),
-    }
-
-    return results
-
-
-X_sm, x_train, x_test, y_train, y_test = prepare_model_data(df, target_col, test_size)
-
-with st.spinner("Training model..."):
-    model_results = train_models(x_train, x_test, y_train, y_test)
-
-# ========================================================================================
-# TAB 3: MODEL SUMMARY (OLS Linear Regression)
-# ========================================================================================
-with tab_model:
-    section_banner("Linear Regression Performance (Test Set)")
-
-    res = model_results["OLS Linear Regression"]
-    test_perf = res["test_perf"]
-    train_perf = res["train_perf"]
-
-    mc1, mc2, mc3, mc4 = st.columns(4)
-    with mc1:
-        kpi_card("R² Score", f"{test_perf['R2']:.3f}",
-                  f"Train R² {train_perf['R2']:.3f}", SUCCESS)
-    with mc2:
-        kpi_card("RMSE", f"{test_perf['RMSE']:,.2f}",
-                  f"Train {train_perf['RMSE']:,.2f}", ACCENT)
-    with mc3:
-        kpi_card("MAE", f"{test_perf['MAE']:,.2f}",
-                  f"Train {train_perf['MAE']:,.2f}", PRIMARY)
-    with mc4:
-        kpi_card("MAPE", f"{test_perf['MAPE']:,.1f}%",
-                  f"Train {train_perf['MAPE']:,.1f}%", WARNING)
-
-    st.write("")
-    section_banner("Predicted vs Actual")
-    plot_df = pd.DataFrame({"Actual": y_test, "Predicted": res["test_pred"]})
-    fig = px.scatter(
-        plot_df, x="Actual", y="Predicted", opacity=0.7,
-        color_discrete_sequence=[PRIMARY],
-        title=f"Linear Regression: Predicted vs Actual ({target_col})",
-    )
-    min_v, max_v = plot_df["Actual"].min(), plot_df["Actual"].max()
-    fig.add_trace(go.Scatter(x=[min_v, max_v], y=[min_v, max_v], mode="lines",
-                              line=dict(color=TEXT_MUTED, dash="dash"), name="Perfect fit"))
-    st.plotly_chart(style_fig(fig), use_container_width=True)
-
-    col1, col2 = st.columns(2)
-    with col1:
-        section_banner("Residual Plot")
-        resid = y_test - res["test_pred"]
-        fig = px.scatter(
-            x=res["test_pred"], y=resid, opacity=0.7,
-            labels={"x": "Fitted Values", "y": "Residuals"},
-            color_discrete_sequence=[DANGER],
-            title="Fitted vs Residuals",
-        )
-        fig.add_hline(y=0, line_dash="dash", line_color=TEXT_MUTED)
-        st.plotly_chart(style_fig(fig), use_container_width=True)
-    with col2:
-        section_banner("Residual Distribution")
-        fig = px.histogram(resid, nbins=30, color_discrete_sequence=[ACCENT], title="Residual Distribution")
-        st.plotly_chart(style_fig(fig), use_container_width=True)
-
-    st.write("")
-    section_banner("Coefficient Summary")
-    coef_df = pd.DataFrame({
-        "Feature": res["model"].params.index,
-        "Coefficient": res["model"].params.values,
-        "P-value": res["model"].pvalues.values,
-    }).sort_values("Coefficient", key=abs, ascending=False)
     st.dataframe(
-        coef_df.style.format({"Coefficient": "{:.4f}", "P-value": "{:.4f}"})
-        .background_gradient(subset=["Coefficient"], cmap="RdBu")
-        .applymap(lambda v: f"color: {SUCCESS}" if v < 0.05 else f"color: {DANGER}", subset=["P-value"]),
+        pd.DataFrame(outlier_rows).sort_values("Outliers", ascending=False),
         use_container_width=True,
+        hide_index=True,
     )
-    st.caption("Coefficients with p-value < 0.05 (green) are statistically significant at the 95% confidence level.")
 
-    st.write("")
-    section_banner("OLS Regression Summary")
-    with st.expander("📄 Full statsmodels OLS summary", expanded=False):
-        st.text(res["model"].summary())
+# ============================================================
+# MODEL BUILDING
+# ============================================================
+elif page == "Model building":
+    st.markdown(
+        '<div class="section-card"><div class="section-title">Model Building</div>'
+        '<div class="section-subtitle">Ordinary Least Squares linear regression with an 80:20 train-test split.</div></div>',
+        unsafe_allow_html=True,
+    )
 
-    section_banner("Multicollinearity Check (VIF)")
-    try:
-        vif_df = pd.DataFrame()
-        vif_df["Feature"] = x_train.columns
-        vif_df["VIF"] = [variance_inflation_factor(x_train.values, i) for i in range(len(x_train.columns))]
-        vif_df = vif_df.sort_values("VIF", ascending=False)
-        st.dataframe(
-            vif_df.style.format({"VIF": "{:.2f}"}).background_gradient(subset=["VIF"], cmap="OrRd"),
-            use_container_width=True,
+    c1, c2, c3 = st.columns(3)
+    test_size = c1.slider("Test size", 0.10, 0.40, 0.20, 0.05)
+    random_state = c2.number_input("Random state", 1, 100, 1)
+    run_model = c3.button("Build Linear Regression Model", use_container_width=True)
+
+    if run_model or st.session_state.model is None:
+        try:
+            model, X_train, X_test, y_train, y_test = make_model(
+                df, test_size=float(test_size), random_state=int(random_state)
+            )
+
+            st.session_state.model = model
+            st.session_state.model_data = {
+                "X_train": X_train,
+                "X_test": X_test,
+                "y_train": y_train,
+                "y_test": y_test,
+            }
+            st.success("Linear regression model built successfully.")
+        except Exception as e:
+            st.error(f"Model could not be built: {e}")
+
+    if st.session_state.model is not None:
+        md = st.session_state.model_data
+        train_perf = performance(st.session_state.model, md["X_train"], md["y_train"])
+        test_perf = performance(st.session_state.model, md["X_test"], md["y_test"])
+
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Test R²", f"{test_perf['R²']:.3f}")
+        c2.metric("Test RMSE", f"{test_perf['RMSE']:.3f}")
+        c3.metric("Test MAE", f"{test_perf['MAE']:.3f}")
+        c4.metric("Test MAPE", f"{test_perf['MAPE']:.2f}%")
+
+        comparison = pd.DataFrame({
+            "Metric": ["R²", "RMSE", "MAE", "MAPE"],
+            "Train": [
+                train_perf["R²"], train_perf["RMSE"],
+                train_perf["MAE"], train_perf["MAPE"]
+            ],
+            "Test": [
+                test_perf["R²"], test_perf["RMSE"],
+                test_perf["MAE"], test_perf["MAPE"]
+            ],
+        })
+
+        st.subheader("Train vs Test Performance")
+        st.dataframe(comparison.round(4), use_container_width=True, hide_index=True)
+
+        fig = px.bar(
+            comparison,
+            x="Metric",
+            y=["Train", "Test"],
+            barmode="group",
         )
-        st.caption("Rule of thumb: VIF > 5 indicates moderate multicollinearity, VIF > 10 indicates high multicollinearity.")
-    except Exception as e:
-        st.warning(f"Could not compute VIF: {e}")
+        fig.update_layout(template="simple_white", height=390)
+        st.plotly_chart(fig, use_container_width=True)
 
-# ========================================================================================
-# TAB 4: PREDICT
-# ========================================================================================
-with tab_predict:
-    section_banner(f"Predict {target_col.title()} for a New Firm")
-    st.caption("Enter firm characteristics below and generate a prediction using the Linear Regression model.")
+# ============================================================
+# MODEL SUMMARY
+# ============================================================
+elif page == "Model summary":
+    st.markdown(
+        '<div class="section-card"><div class="section-title">Model Summary</div>'
+        '<div class="section-subtitle">Statistical significance, coefficients, VIF and regression diagnostics.</div></div>',
+        unsafe_allow_html=True,
+    )
 
-    res = model_results["OLS Linear Regression"]
-    feature_cols = [c for c in x_train.columns if c != "const"]
-    input_vals = {}
-    n_per_row = 3
-    rows = [feature_cols[i:i + n_per_row] for i in range(0, len(feature_cols), n_per_row)]
-    for row in rows:
-        cols = st.columns(len(row))
-        for c, feat in zip(cols, row):
-            with c:
-                default_val = float(x_train[feat].median())
-                input_vals[feat] = st.number_input(feat, value=default_val, format="%.3f")
+    if st.session_state.model is None:
+        st.info("Build the model first from the Model building bookmark.")
+    else:
+        model = st.session_state.model
+        md = st.session_state.model_data
 
-    if st.button("🔮 Predict", type="primary"):
-        input_df = pd.DataFrame([input_vals])
-        input_df.insert(0, "const", 1.0)
-        input_df = input_df[x_train.columns]
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("R²", f"{model.rsquared:.3f}")
+        c2.metric("Adjusted R²", f"{model.rsquared_adj:.3f}")
+        c3.metric("AIC", f"{model.aic:.2f}")
+        c4.metric("Observations", f"{int(model.nobs):,}")
 
-        prediction = res["model"].predict(input_df)[0]
+        st.subheader("Regression Coefficients")
+
+        coef = pd.DataFrame({
+            "Feature": model.params.index,
+            "Coefficient": model.params.values,
+            "P-value": model.pvalues.values,
+            "Significant at 5%": model.pvalues.values < 0.05,
+        }).sort_values("P-value")
+
+        st.dataframe(
+            coef.style.format({
+                "Coefficient": "{:.5f}",
+                "P-value": "{:.5f}",
+            }),
+            use_container_width=True,
+            hide_index=True,
+        )
+
+        st.subheader("Feature Significance")
+
+        plot_coef = coef[coef["Feature"] != "const"].copy()
+        plot_coef["Abs Coefficient"] = plot_coef["Coefficient"].abs()
+        plot_coef = plot_coef.sort_values("Abs Coefficient", ascending=False).head(15)
+
+        fig = px.bar(
+            plot_coef.sort_values("Coefficient"),
+            x="Coefficient",
+            y="Feature",
+            orientation="h",
+        )
+        fig.update_layout(template="simple_white", height=500)
+        st.plotly_chart(fig, use_container_width=True)
+
+        st.subheader("Multicollinearity — VIF")
+
+        X_no_const = md["X_train"].drop(columns=["const"], errors="ignore")
+        if X_no_const.shape[1] > 0:
+            vif_rows = []
+            for i, col in enumerate(X_no_const.columns):
+                try:
+                    vif_value = variance_inflation_factor(X_no_const.values, i)
+                except Exception:
+                    vif_value = np.nan
+                vif_rows.append({"Feature": col, "VIF": vif_value})
+
+            vif_df = pd.DataFrame(vif_rows).sort_values("VIF", ascending=False)
+            st.dataframe(
+                vif_df.style.format({"VIF": "{:.2f}"}),
+                use_container_width=True,
+                hide_index=True,
+            )
+
+        st.subheader("Residual Diagnostics")
+
+        pred = model.predict(md["X_train"])
+        residuals = md["y_train"] - pred
+        diagnostic_df = pd.DataFrame({
+            "Actual": md["y_train"].values,
+            "Fitted": pred.values,
+            "Residual": residuals.values,
+        })
+
+        c1, c2 = st.columns(2)
+
+        with c1:
+            fig = px.scatter(
+                diagnostic_df,
+                x="Fitted",
+                y="Residual",
+                trendline="ols",
+                opacity=0.65,
+            )
+            fig.add_hline(y=0, line_dash="dash")
+            fig.update_layout(template="simple_white", height=420)
+            st.plotly_chart(fig, use_container_width=True)
+
+        with c2:
+            fig = px.histogram(diagnostic_df, x="Residual", nbins=30)
+            fig.update_layout(template="simple_white", height=420)
+            st.plotly_chart(fig, use_container_width=True)
+
+        shapiro_note = ""
+        if len(residuals) <= 5000:
+            try:
+                _, p = stats.shapiro(residuals)
+                shapiro_note = f"Shapiro-Wilk p-value: {p:.4f}"
+            except Exception:
+                shapiro_note = "Shapiro-Wilk test unavailable."
+        else:
+            shapiro_note = "Shapiro-Wilk skipped for more than 5,000 residuals."
 
         st.markdown(
-            f"""
-            <div class="kpi-card" style="border: 1px solid {SUCCESS}; margin-top:10px;">
-                <div class="kpi-label">Predicted {target_col.title()}</div>
-                <div class="kpi-value" style="color:{SUCCESS}; font-size:2.2rem;">{prediction:,.2f}</div>
-                <div class="kpi-sub" style="color:{TEXT_MUTED};">using Linear Regression</div>
-            </div>
-            """,
+            f'<div class="insight"><b>Diagnostic note:</b> {shapiro_note}. '
+            'Residual plots should be checked for visible patterns and changing variance.</div>',
             unsafe_allow_html=True,
         )
 
-# ========================================================================================
-# TAB 5: RAW DATA
-# ========================================================================================
-with tab_data:
-    section_banner("Dataset Preview")
-    st.dataframe(df.head(200), use_container_width=True)
+        with st.expander("Full Statsmodels Regression Summary"):
+            st.text(model.summary().as_text())
 
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown("##### Summary Statistics")
-        st.dataframe(df.describe().T, use_container_width=True)
-    with col2:
-        st.markdown("##### Missing Values")
-        miss = df.isnull().sum()
-        miss = miss[miss > 0]
-        if len(miss):
-            st.dataframe(miss.rename("Missing Count"), use_container_width=True)
-        else:
-            st.success("No missing values in the current dataset.")
-
-    st.download_button(
-        "⬇️ Download current dataset as CSV",
-        data=df.to_csv(index=False).encode("utf-8"),
-        file_name="firm_data_export.csv",
-        mime="text/csv",
+# ============================================================
+# PREDICT
+# ============================================================
+elif page == "Predict":
+    st.markdown(
+        '<div class="section-card"><div class="section-title">Predict Firm Sales</div>'
+        '<div class="section-subtitle">Enter firm attributes and generate a sales estimate from the trained regression model.</div></div>',
+        unsafe_allow_html=True,
     )
+
+    if st.session_state.model is None:
+        st.info("Build the model first from the Model building bookmark.")
+    else:
+        model = st.session_state.model
+        X_train = st.session_state.model_data["X_train"]
+
+        feature_columns = [c for c in X_train.columns if c != "const"]
+
+        st.write("Enter values for the model features:")
+
+        input_values = {}
+
+        cols = st.columns(3)
+        for i, feature in enumerate(feature_columns):
+            with cols[i % 3]:
+                original_feature = feature
+
+                # Handle one-hot encoded columns.
+                if feature.endswith("_yes") or feature.endswith("_Yes"):
+                    input_values[feature] = st.selectbox(
+                        feature.replace("_", " ").title(),
+                        [0, 1],
+                        format_func=lambda x: "Yes" if x == 1 else "No",
+                        key=f"pred_{feature}",
+                    )
+                else:
+                    # Recover the base column where possible.
+                    base_col = feature
+                    if base_col in df.columns and pd.api.types.is_numeric_dtype(df[base_col]):
+                        default = float(df[base_col].median())
+                    else:
+                        default = 0.0
+
+                    input_values[feature] = st.number_input(
+                        feature.replace("_", " ").title(),
+                        value=default,
+                        key=f"pred_{feature}",
+                    )
+
+        if st.button("Generate Sales Prediction", use_container_width=True):
+            try:
+                new_firm = pd.DataFrame([input_values])
+                new_firm = new_firm.reindex(columns=feature_columns, fill_value=0)
+                new_firm = sm.add_constant(new_firm, has_constant="add")
+                new_firm = new_firm.reindex(columns=X_train.columns, fill_value=0).astype(float)
+
+                prediction = float(model.predict(new_firm).iloc[0])
+
+                st.markdown(
+                    f"""
+                    <div class="section-card" style="text-align:center;">
+                        <div class="section-subtitle">Predicted Sales</div>
+                        <div style="font-size:38px;font-weight:800;color:#173B6C;">
+                            {prediction:,.2f}
+                        </div>
+                        <div class="kpi-caption">Estimated using the fitted OLS regression model</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+            except Exception as e:
+                st.error(f"Prediction failed: {e}")
+
+# ============================================================
+# ABOUT
+# ============================================================
+elif page == "About":
+    st.markdown(
+        '<div class="section-card"><div class="section-title">Project Overview</div>'
+        '<div class="section-subtitle">Firm-level sales prediction using linear regression.</div></div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("""
+    **Objective**
+
+    Predict firm sales using firm-level attributes and identify the variables that
+    have the strongest statistical relationship with sales.
+
+    **Workflow**
+
+    Data preprocessing → EDA → Linear regression → Model diagnostics →
+    Performance evaluation → Sales prediction
+
+    **Primary model**
+
+    Ordinary Least Squares (OLS) linear regression.
+
+    **Performance metrics**
+
+    R², Adjusted R², RMSE, MAE and MAPE.
+
+    **Diagnostics**
+
+    Multicollinearity using VIF, residual analysis, normality assessment and
+    heteroscedasticity-oriented diagnostics.
+    """)
+
+# ============================================================
+# FOOTER
+# ============================================================
+st.markdown(
+    '<div class="footer">Firm Sales Analytics Dashboard • Linear Regression • Built with Streamlit</div>',
+    unsafe_allow_html=True,
+)
